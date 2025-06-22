@@ -1,5 +1,5 @@
 ---
-title: "Mathematical Foundation for Data Science TA"
+title: "Mathematical Foundation for Data Science"
 collection: teaching
 type: "Course"
 permalink: /teaching/MFDS
@@ -28,11 +28,5 @@ necessarily in the order listed below:
 12. Theory of Lagrangians for constrained optimisation.
 13. Algorithms for constrained optimisation.
 14. Applications of Linear algebra, Probability and Optimisation in data science: Random projections, Principal component analysis.
-<!-- Heading 1
-======
 
-Heading 2
-======
-
-Heading 3 -->
 ======

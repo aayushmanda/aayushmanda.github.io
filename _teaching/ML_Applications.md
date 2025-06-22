@@ -19,13 +19,5 @@ The course was intended to introduce students to the fundamental of machine lear
 6. Unsupervised learning methods including various clustering algorithms
 7. Maximum likelihood, Bayesian estimation
 8. Selected advanced topics
-<!-- This is a description of a teaching experience. You can use markdown like any other post.
 
-Heading 1
-======
-
-Heading 2
-======
-
-Heading 3 -->
 ======
