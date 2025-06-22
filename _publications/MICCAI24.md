@@ -6,10 +6,10 @@ permalink: /publication/MICCAI24
 excerpt: 'This paper is about the number 1. The number 2 is left for future work.'
 date: 2024-10-03
 venue: 'MICCAI'
-# slidesurl: 'http://academicpages.github.io/files/slides1.pdf'
+slidesurl: 'http://academicpages.github.io/files/slides1.pdf'
 paperurl: 'https://arxiv.org/pdf/2409.04975'
-# bibtexurl: 'http://academicpages.github.io/files/bibtex1.bib'
-citation: 'Aayushman, Gaddey, H., Mittal, V., Chawla, M., & Gupta, G. R. (2024). PatchAlign: Fair and accurate skin disease image classification by alignment with clinical labels '
+bibtexurl: 'http://academicpages.github.io/files/bibtex1.bib'
+citation: 'Aayushman, Gaddey, H., Mittal, V., Chawla, M., & Gupta, G. R. (2024). MICCAI'
 ---
 
 Deep learning models have achieved great success in automating skin lesion diagnosis. However, the ethnic disparity in these models' predictions needs to be addressed before deploying them. We introduce a novel approach, PatchAlign, to enhance skin condition image classification accuracy and fairness by aligning with clinical text representations of skin conditions. PatchAlign uses Graph Optimal Transport (GOT) Loss as a regularizer to perform cross-domain alignment. The representations obtained are robust and generalize well across skin tones, even with limited training samples. To reduce the effect of noise and artifacts in clinical dermatology images, we propose a learnable Masked Graph Optimal Transport for cross-domain alignment that further improves fairness metrics.
