@@ -3,9 +3,9 @@ title: "Machine Learning Applications"
 collection: teaching
 type: "WebMtech Course"
 permalink: /teaching/ML_Applications
-venue: "University 1, Department"
-date: 2015-01-01
-location: "City, Country"
+venue: "DSAI, IITM"
+date: Jan 2025 - May 2025
+location: "Chennai, India"
 ---
 ## Description
 The course was intended to introduce students to the fundamental of machine learning. As a TA, I had to conduct exam and evaluate them.
