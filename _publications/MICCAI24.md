@@ -6,9 +6,9 @@ permalink: /publication/MICCAI24
 excerpt: 'This paper is about the number 1. The number 2 is left for future work.'
 date: 2024-10-03
 venue: 'MICCAI'
-slidesurl: 'http://academicpages.github.io/files/slides1.pdf'
+slidesurl: 'http://aayushmanda.github.io/files/slides1.pdf'
 paperurl: 'https://arxiv.org/pdf/2409.04975'
-bibtexurl: 'http://academicpages.github.io/files/bibtex1.bib'
+bibtexurl: 'http://aayushmanda.github.io/files/bibtex1.bib'
 citation: 'Aayushman, Gaddey, H., Mittal, V., Chawla, M., & Gupta, G. R. (2024). MICCAI'
 ---
 
