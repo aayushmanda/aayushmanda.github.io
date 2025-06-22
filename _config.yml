@@ -9,7 +9,7 @@
 # Basic Site Settings
 locale                   : "en-US"
 site_theme               : "default"
-title                    : "Aayushman / "
+title                    : "Aayushman"
 title_separator          : "-"
 name                     : &name "Aayushman"
 description              : &description "Interested in ML and Maths"
@@ -25,9 +25,9 @@ author:
   avatar           : "profile.jpg"
   name             : "Aayushman"
   pronouns         :  "he/him"  
-  bio              : "Short biography for the left-hand sidebar"
+  bio              : "ML and Maths"
   location         : "Chennai, India"
-  employer         : "Red Brick University"
+  employer         : #"Red Brick University"
   uri              : # URL
   email            : "aayushman@dsai.iitm.ac.in" 
 
@@ -249,15 +249,15 @@ defaults:
     values:
       layout: single
       author_profile: true
-  # _teaching
-  - scope:
-      path: ""
-      type: teaching
-    values:
-      layout: single
-      author_profile: true
-      share: true
-      comments: true
+  # # _teaching
+  # - scope:
+  #     path: ""
+  #     type: teaching
+  #   values:
+  #     layout: single
+  #     author_profile: true
+  #     share: true
+  #     comments: true
   # _publications
   - scope:
       path: ""
