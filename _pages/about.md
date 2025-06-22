@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "About Me"
+title: "Hi!"
 author_profile: true
 redirect_from: 
   - /about/
@@ -8,7 +8,9 @@ redirect_from:
 ---
 
 
-Hi, I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion. I’m passionate about building innovative solutions and contributing to the future of intelligent systems. Explore my projects and research to learn more about my journey!
+I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems. 
+
+** Under Construction **
 
 
 
