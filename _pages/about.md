@@ -10,8 +10,12 @@ redirect_from:
 
 I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems. 
 
-<div id="conway-pulsar"></div>
+### Featured:
 
+This is an interactive implementation of Conway's Game of Life.
+
+<!-- This is the crucial placeholder. The script we added earlier will find this div. -->
+<div id="conway-pulsar"></div>
 
 <!-- ** Under Construction ** -->
 
