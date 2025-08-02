@@ -10,26 +10,18 @@ redirect_from:
 
 
 I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems.
+
 ## Conway's Game of Life - Pulsar
 
 <canvas id="gameCanvas" width="340" height="340" style="border:1px solid #ccc;"></canvas>
 
+{% raw %}
 <script>
-// Wait for the page to load before running the script
 document.addEventListener("DOMContentLoaded", function() {
-
   const canvas = document.getElementById('gameCanvas');
-  // Add a safety check in case the canvas isn't found
-  if (!canvas) {
-    console.error("Canvas element not found!");
-    return;
-  }
-  
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  const gridSize = 17;
-  const cellSize = 20; // 340 / 17 = 20
-  
-  // The pulsar pattern
+  const gridSize = 17, cellSize = 20;
   let grid = [
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
@@ -54,9 +46,7 @@ document.addEventListener("DOMContentLoaded", function() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
-        // Use a more visible color for live cells
-        ctx.fillStyle = grid[y][x] ? '#333' : '#f0f0f0';
-        // The -1 creates a nice visual grid line effect
+        ctx.fillStyle = grid[y][x] ? '#333' : '#fafafa';
         ctx.fillRect(x * cellSize, y * cellSize, cellSize - 1, cellSize - 1);
       }
     }
@@ -67,42 +57,34 @@ document.addEventListener("DOMContentLoaded", function() {
     for (let dy = -1; dy <= 1; dy++) {
       for (let dx = -1; dx <= 1; dx++) {
         if (dy === 0 && dx === 0) continue;
-        // Use modulo for seamless wrapping at edges (toroidal array)
-        const ny = (y + dy + gridSize) % gridSize;
-        const nx = (x + dx + gridSize) % gridSize;
-        count += grid[ny][nx];
+        let ny = y + dy, nx = x + dx;
+        if (ny >= 0 && ny < gridSize && nx >= 0 && nx < gridSize)
+          count += grid[ny][nx];
       }
     }
     return count;
   }
 
   function getNextGeneration() {
-    const newGrid = Array(gridSize).fill(0).map(() => Array(gridSize).fill(0));
+    const newGrid = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
     for (let y = 0; y < gridSize; y++) {
       for (let x = 0; x < gridSize; x++) {
-        const neighbors = countNeighbors(y, x);
-        const isAlive = grid[y][x];
-
-        if (isAlive && (neighbors === 2 || neighbors === 3)) {
-          newGrid[y][x] = 1; // Survive
-        } else if (!isAlive && neighbors === 3) {
-          newGrid[y][x] = 1; // Birth
-        }
-        // All other cells are implicitly 0 (dead)
+        const alive = grid[y][x];
+        const n = countNeighbors(y, x);
+        if (alive && (n === 2 || n === 3)) newGrid[y][x] = 1;
+        else if (!alive && n === 3) newGrid[y][x] = 1;
       }
     }
     return newGrid;
   }
 
-  function update() {
+  function loop() {
     grid = getNextGeneration();
     drawGrid();
   }
 
-  // Draw the initial state once
   drawGrid();
-  // Start the animation loop
-  setInterval(update, 200); // 200ms feels a bit smoother
-
+  setInterval(loop, 300);
 });
 </script>
+
