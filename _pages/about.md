@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "Hi!"
+title: "About"
 author_profile: true
 redirect_from: 
   - /about/
@@ -8,9 +8,35 @@ redirect_from:
 ---
 
 
-I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems. 
+I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanisms, and Diffusion models. I am passionate about building innovative solutions and contributing to the future of intelligent systems. 
 
-** Under Construction **
+Feel free to explore my work and get in touch!
+
+### Featured Project: Interactive Conway's Game of Life
+
+Below is an interactive implementation of Conway's Game of Life, a project I find fascinating. This uses a lightweight library to create beautiful Game of Life embeds.
+
+<!-- 1. This is the placeholder where the game will appear. -->
+<div id="conway-pulsar"></div>
+
+<!-- 2. This script will only run on this page. -->
+<!-- It finds the 'conway-pulsar' div above and creates the game inside it. -->
+<script>
+  // Wait for the document to be ready to ensure the conway library is loaded
+  document.addEventListener("DOMContentLoaded", function() {
+    const game = conway("conway-pulsar", {
+      cellSize: 20,
+      gridWidth: 20,
+      gridHeight: 20,
+    });
+
+    game.place(patterns.pulsar, 3, 3);
+    game.start();
+  });
+</script>
+
+
+<!-- ** Under Construction ** -->
 
 
 
