@@ -7,10 +7,8 @@ redirect_from:
   - /about.html
 ---
 
-
-
 I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems.
-
+<!-- 
 ## Conway's Game of Life - Pulsar
 
 <canvas id="gameCanvas" width="340" height="340" style="border:1px solid #ccc;"></canvas>
@@ -87,4 +85,4 @@ document.addEventListener("DOMContentLoaded", function() {
   setInterval(loop, 300);
 });
 </script>
-
+ -->
