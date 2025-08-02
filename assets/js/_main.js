@@ -140,4 +140,19 @@ $(document).ready(function () {
     midClick: true // allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source.
   });
 
+  // --- CONWAY'S GAME OF LIFE START ---
+  // Check if the placeholder div exists on the current page
+  if ($("#conway-pulsar").length) {
+    // If it exists, create the game
+    const game = conway("conway-pulsar", {
+      cellSize: 20,
+      gridWidth: 20,
+      gridHeight: 20,
+    });
+
+    game.place(patterns.pulsar, 3, 3);
+    game.start();
+  }
+  // --- CONWAY'S GAME OF LIFE END ---
+
 });
