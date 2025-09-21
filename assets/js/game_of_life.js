@@ -97,6 +97,14 @@ function clearGrid() {
     drawGrid();
 }
 
+function randomPattern() {
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            grid[y][x] = Math.random() < 0.3 ? 1 : 0; // 30% chance cell is alive
+        }
+    }
+    drawGrid();
+}
+
 // Init
-loadPulsar();
-drawGrid();
+randomPattern();
