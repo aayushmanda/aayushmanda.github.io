@@ -1,45 +1,35 @@
----
 layout: default
 title: "Conway's Game of Life"
 permalink: /game_of_life/
----
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Conway's Game of Life - Pulsar Edition</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-        canvas {
-            border: 2px solid #333;
-            background-color: #000;
-            cursor: crosshair;
-        }
-        .controls {
-            margin: 10px 0;
-        }
-        button {
-            margin: 5px;
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        #info {
-            text-align: center;
-            max-width: 600px;
-        }
-    </style>
-</head>
-<body>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 20px;
+    }
+    canvas {
+        border: 2px solid #333;
+        background-color: #000;
+        cursor: crosshair;
+    }
+    .controls {
+        margin: 10px 0;
+    }
+    button {
+        margin: 5px;
+        padding: 10px 15px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+    #info {
+        text-align: center;
+        max-width: 600px;
+    }
+</style>
     <h1>Conway's Game of Life: Pulsar Oscillator</h1>
     <canvas id="grid" width="500" height="500"></canvas>
     <div class="controls">
@@ -165,5 +155,3 @@ permalink: /game_of_life/
         loadPulsar();
         drawGrid();
     </script>
-</body>
-</html>
