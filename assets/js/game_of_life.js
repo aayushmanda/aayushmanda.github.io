@@ -65,19 +65,28 @@ canvas.addEventListener('click', (e) => {
     drawGrid();
 });
 
+// function loadPulsar() {
+//     clearGrid();
+//     const centerY = Math.floor(rows / 2);
+//     const centerX = Math.floor(cols / 2);
+//     const pulsarOffsets = [
+//         [4,5],[4,6],[4,7], [5,9], [6,9], [7,9], [9,7],[9,6],[9,5],
+//         [10,4],[11,4],[12,4], [11,5], [11,6], [11,7], [10,9], [9,9]
+//     ];
+//     pulsarOffsets.forEach(([dy, dx]) => {
+//         const py = (centerY + dy - 7) % rows;
+//         const px = (centerX + dx - 7) % cols;
+//         grid[py][px] = 1;
+//     });
+//     drawGrid();
+// }
+
 function loadPulsar() {
-    clearGrid();
-    const centerY = Math.floor(rows / 2);
-    const centerX = Math.floor(cols / 2);
-    const pulsarOffsets = [
-        [4,5],[4,6],[4,7], [5,9], [6,9], [7,9], [9,7],[9,6],[9,5],
-        [10,4],[11,4],[12,4], [11,5], [11,6], [11,7], [10,9], [9,9]
-    ];
-    pulsarOffsets.forEach(([dy, dx]) => {
-        const py = (centerY + dy - 7) % rows;
-        const px = (centerX + dx - 7) % cols;
-        grid[py][px] = 1;
-    });
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            grid[y][x] = Math.random() < 0.3 ? 1 : 0; // 30% chance cell is alive
+        }
+    }
     drawGrid();
 }
 
