@@ -35,5 +35,5 @@ main:
   - title: "Game of Life"
     url: /game_of_life/
 
-    - title: "My Calendar"
-      url: /mycalendar/
+  - title: "My Calendar"
+    url: /mycalendar/
