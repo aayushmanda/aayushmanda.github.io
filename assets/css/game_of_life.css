@@ -1,0 +1,27 @@
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 20px;
+}
+canvas {
+    border: 2px solid #333;
+    background-color: #000;
+    cursor: crosshair;
+}
+.controls {
+    margin: 10px 0;
+}
+button {
+    margin: 5px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+#info {
+    text-align: center;
+    max-width: 600px;
+}
