@@ -16,7 +16,7 @@
         url('../fonts/academicons.svg') format('svg');
 }
 .ai {
-  font-family: 'Academicons';
+  font-family: "Times New Roman", Times, serif;
   font-weight: 400;
   -moz-osx-font-smoothing: grayscale;
   -webkit-font-smoothing: antialiased;
