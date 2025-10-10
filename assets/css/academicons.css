@@ -569,3 +569,36 @@ border-radius: .1em;
 .ai-inverse {
   color: #fff;
 }
+/* ========================================
+   TIMES NEW ROMAN FONT FOR WEBPAGE TEXT
+   ======================================== */
+
+/* Apply Times New Roman to the entire webpage */
+* {
+    font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Set base font for body (fallback method) */
+body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Ensure all text elements use Times New Roman */
+h1, h2, h3, h4, h5, h6, 
+p, div, span, li, ul, ol, 
+td, th, input, textarea, select, 
+button, label, a, blockquote {
+    font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Override the ai class to preserve icon functionality but reset for non-icon elements */
+.ai {
+    font-family: 'Academicons' !important;
+}
+
+/* Ensure regular text inside elements with ai class still uses Times New Roman */
+.ai:not(:before):not(:after) {
+    font-family: "Times New Roman", Times, serif !important;
+}
