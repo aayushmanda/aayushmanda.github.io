@@ -5,13 +5,20 @@ permalink: /game_of_life/
 ---
 
 <h1>Conway's Game of Life: Pulsar Oscillator</h1>
-<canvas id="grid" width="500" height="500"></canvas>
-<div class="controls">
-    <button onclick="togglePlay()">Play/Pause</button>
-    <button onclick="step()">Step</button>
-    <button onclick="clearGrid()">Clear</button>
-    <button onclick="loadPulsar()">Load Pulsar</button>
-</div>
+<div class="game-container">
+    <h1>Conway's Game of Life: Pulsar Oscillator</h1>
+    <canvas id="grid"></canvas>
+        <div class="controls">
+            <button onclick="togglePlay()">Play/Pause</button>
+            <button onclick="step()">Step</button>
+            <button onclick="clearGrid()">Clear</button>
+            <button onclick="loadPulsar()">Load Pulsar</button>
+
+            <label for="speedRange">Speed:</label>
+            <input id="speedRange" type="range" min="20" max="500" step="10" value="100" oninput="setSpeed(this.value)">
+            <span id="speedValue">100 ms</span>
+        </div>
 <div id="info">
     <p>Click on the grid to toggle cells on/off. Watch the pulsar pulse every 3 generations! Rules: Birth on 3 neighbors, survival on 2-3.</p>
+</div>
 </div>

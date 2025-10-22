@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "Hi!"
+title: ""
 author_profile: true
 redirect_from: 
   - /about/
@@ -8,6 +8,8 @@ redirect_from:
 ---
 
 {% include lorenz.html %}
+
+
 
 I'm Aayushman, a Master's student in Data Science and Artificial Intelligence. My work focuses on understanding AI through research in LLMs, Attention Mechanism and Diffusion models. I am interested in building innovative solutions and contributing to the future of intelligent systems.
 
