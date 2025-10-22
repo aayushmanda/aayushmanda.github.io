@@ -23,10 +23,32 @@
 {% elsif page.header.overlay_filter %}
   {% capture overlay_filter %}rgba(0, 0, 0, {{ page.header.overlay_filter }}){% endcapture %}
 {% endif %}
-
-<div class="page__hero{% if page.header.overlay_color or page.header.overlay_image %}--overlay{% endif %}"
-  style="{% if page.header.overlay_color %}background-color: {{ page.header.overlay_color | default: 'transparent' }};{% endif %} {% if overlay_img_path %}background-image: {% if overlay_filter %}linear-gradient({{ overlay_filter }}, {{ overlay_filter }}), {% endif %}url('{{ overlay_img_path }}');{% endif %}"
->
+{% assign ocolor = page.header.overlay_color | default: '' %}
+{% assign oimg = overlay_img_path | default: '' %}
+{% assign ofilter = overlay_filter | default: '' %}
+{% if page.header.overlay_color or page.header.overlay_image %}
+  <div class="page__hero page__hero--overlay" data-overlay-color="{{ ocolor }}" data-overlay-image="{{ oimg }}" data-overlay-filter="{{ ofilter }}">
+{% else %}
+  <div class="page__hero" data-overlay-color="{{ ocolor }}" data-overlay-image="{{ oimg }}" data-overlay-filter="{{ ofilter }}">
+{% endif %}
+  <script>
+    (function(){
+      try{
+        var s = document.currentScript;
+        if(!s) return;
+        var p = s.parentElement;
+        if(!p) return;
+        var c = p.getAttribute('data-overlay-color');
+        var img = p.getAttribute('data-overlay-image');
+        var f = p.getAttribute('data-overlay-filter');
+        if(c) p.style.backgroundColor = c;
+        if(img){
+          if(f) p.style.backgroundImage = 'linear-gradient(' + f + ', ' + f + '), url("' + img + '")';
+          else p.style.backgroundImage = 'url("' + img + '")';
+        }
+      }catch(e){/* ignore */}
+    })();
+  </script>
   {% if page.header.overlay_color or page.header.overlay_image %}
     <div class="wrapper">
       <h1 class="page__title" itemprop="headline">
