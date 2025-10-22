@@ -19,5 +19,34 @@ permalink: /game_of_life/
         </div>
 <div id="info">
     <p>Click on the grid to toggle cells on/off. Watch the pulsar pulse every 3 generations! Rules: Birth on 3 neighbors, survival on 2-3.</p>
+    <section class="explain-boomers" aria-labelledby="explain-title">
+        <h2 id="explain-title">What is this? (Plain English)</h2>
+        <p>This is a simple, old-school computer game called Conway's <strong>Game of Life</strong>. Imagine a sheet of graph paper made of tiny squares. Each square can be either <em>alive</em> (filled) or <em>dead</em> (empty). The game doesn't need a player — it follows a few simple rules and shows how patterns change over time.</p>
+
+        <h3>How it works — the rules (very short)</h3>
+        <ol>
+            <li>If a dead square has exactly <strong>3</strong> living neighbors, it becomes alive (a new cell is born).</li>
+            <li>If a living square has <strong>2 or 3</strong> living neighbors, it stays alive.</li>
+            <li>If a living square has fewer than <strong>2</strong> neighbors, it dies (lonely).</li>
+            <li>If a living square has more than <strong>3</strong> neighbors, it dies (overcrowded).</li>
+        </ol>
+
+        <p>That's it — just those four rules. Every step (generation) the whole grid updates using the same rules. Small starting patterns can make surprising and beautiful motion.</p>
+
+        <h3>Quick tips</h3>
+        <ul>
+            <li>Click the grid to turn squares on or off.</li>
+            <li>Use <em>Play</em> to run generations automatically, or <em>Step</em> to advance one generation at a time.</li>
+            <li>Try the <em>Load Pulsar</em> button to see a classic repeating pattern.</li>
+        </ul>
+    </section>
+    <section class="history" aria-labelledby="history-title">
+        <h2 id="history-title">A short history (for the curious)</h2>
+        <p>The Game of Life was created in 1970 by the British mathematician John Horton Conway while he was exploring simple rules that could generate complex behaviour. It first appeared in print in Martin Gardner's "Mathematical Games" column in Scientific American, which brought it to a wide audience.</p>
+
+        <p>People quickly discovered surprising things: patterns that move ("spaceships"), patterns that repeat ("oscillators"), and even patterns that can build other patterns. Because of this richness, programmers and hobbyists built many Life programs, discovered thousands of notable patterns, and used Life to study ideas about emergence and computation. The Game of Life has been popular ever since — part math, part art, and a playground for curiosity.</p>
+
+        <p>If you want to read more: Martin Gardner's original column and the many pattern collections are a great next step. But the fastest way to learn is to draw a few cells and press Play — you'll see the history come alive in action.</p>
+    </section>
 </div>
 </div>
