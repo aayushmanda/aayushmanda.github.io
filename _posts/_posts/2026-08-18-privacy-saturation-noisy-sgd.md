@@ -1,4 +1,3 @@
-cat << 'EOF' > _posts/2026-08-18-privacy-saturation-noisy-sgd.md
 ---
 title: 'Privacy Saturation in Noisy-SGD: Why More Iterations Don’t Always Mean More Privacy Loss'
 date: 2026-08-17
