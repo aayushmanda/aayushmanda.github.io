@@ -1,7 +1,7 @@
 ---
 title: 'Privacy Saturation in Noisy-SGD: Why More Iterations Don’t Always Mean More Privacy Loss'
 date: 2026-08-17
-permalink: /posts/2026/08/privacy-saturation-noisy-sgd/
+permalink: /posts/2012/08/blog-post-1/
 tags:
   - Differential Privacy
   - Optimization
@@ -173,6 +173,3 @@ $$\mathcal{D}_\alpha(P_{W_T} \| P_{W_T'}) \le \frac{\alpha L^2}{n^2 \sigma^2} \m
 * Peyré, G., & Cuturi, M. (2020). *Computational Optimal Transport*. Foundations and Trends in Machine Learning.
 EOF
 
-git add _posts/2026-08-18-privacy-saturation-noisy-sgd.md
-git commit -m "Update post with clean MathJax syntax and remove citation artifacts"
-git push
