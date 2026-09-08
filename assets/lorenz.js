@@ -55,8 +55,8 @@
   function project(point, rect) {
     var scale = rect.height / designHeight;
     return {
-      x: rect.width * 0.55 + point.x * 8.3 * scale,
-      y: rect.height * 0.58 - point.z * 4.2 * scale + point.y * 1.4 * scale
+      x: rect.width * 0.5 + point.x * 8.3 * scale,
+      y: rect.height * 0.7 - point.z * 4.2 * scale + point.y * 1.4 * scale
     };
   }
 
