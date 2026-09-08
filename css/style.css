@@ -211,6 +211,14 @@ a {
   line-height: 1.3;
 }
 
+.lock-icon {
+  width: 15px;
+  height: 15px;
+  margin-left: 0.15rem;
+  vertical-align: middle;
+  color: var(--fg-soft);
+}
+
 .entry p {
   margin-bottom: 0.8rem;
 }
