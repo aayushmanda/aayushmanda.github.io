@@ -13,7 +13,7 @@
   var dt = 0.006;
   var stepsPerFrame = 3;
   var trailMax = 1100;
-  var baseHeight = 130;
+  var designHeight = 260;
   var bandCount = 6;
   var minAlpha = 0.06;
   var maxAlpha = 0.62;
@@ -53,10 +53,10 @@
   }
 
   function project(point, rect) {
-    var scale = rect.height / baseHeight;
+    var scale = rect.height / designHeight;
     return {
-      x: rect.width * 0.72 + point.x * 5.6 * scale,
-      y: rect.height * 0.5 - point.z * 2.9 * scale + point.y * 1 * scale
+      x: rect.width * 0.55 + point.x * 8.3 * scale,
+      y: rect.height * 0.58 - point.z * 4.2 * scale + point.y * 1.4 * scale
     };
   }
 
