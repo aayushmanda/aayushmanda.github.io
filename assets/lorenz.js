@@ -11,10 +11,24 @@
   var rho = 28;
   var beta = 8 / 3;
   var dt = 0.006;
-  var stepsPerFrame = 4;
-  var trailMax = 2600;
-  var headLength = 140;
+  var stepsPerFrame = 3;
+  var trailMax = 1100;
+  var baseHeight = 130;
+  var bandCount = 6;
+  var minAlpha = 0.06;
+  var maxAlpha = 0.62;
   var trail = [];
+
+  var accentColor = "#c8500e";
+  var isDarkTheme = false;
+
+  function refreshTheme() {
+    isDarkTheme = document.documentElement.getAttribute("data-theme")
+      ? document.documentElement.getAttribute("data-theme") === "dark"
+      : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var value = getComputedStyle(document.documentElement).getPropertyValue("--accent");
+    accentColor = value ? value.trim() : isDarkTheme ? "#ff9752" : "#c8500e";
+  }
 
   function resize() {
     var rect = canvas.getBoundingClientRect();
@@ -39,9 +53,10 @@
   }
 
   function project(point, rect) {
+    var scale = rect.height / baseHeight;
     return {
-      x: rect.width * 0.55 + point.x * 8.3,
-      y: rect.height * 0.58 - point.z * 4.2 + point.y * 1.4
+      x: rect.width * 0.72 + point.x * 5.6 * scale,
+      y: rect.height * 0.5 - point.z * 2.9 * scale + point.y * 1 * scale
     };
   }
 
@@ -50,27 +65,26 @@
     ctx.clearRect(0, 0, rect.width, rect.height);
     if (trail.length < 2) return;
 
-    var headStart = Math.max(0, trail.length - headLength);
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = accentColor;
 
-    ctx.lineWidth = 1.1;
-    ctx.strokeStyle = "rgba(72, 96, 122, 0.16)";
-    ctx.beginPath();
-    for (var i = 0; i < headStart; i += 1) {
-      var p = project(trail[i], rect);
-      if (i === 0) ctx.moveTo(p.x, p.y);
-      else ctx.lineTo(p.x, p.y);
-    }
-    ctx.stroke();
+    var bandSize = Math.ceil(trail.length / bandCount);
+    for (var b = 0; b < bandCount; b += 1) {
+      var start = b * bandSize;
+      var end = Math.min(trail.length, start + bandSize + 1);
+      if (start >= trail.length - 1) break;
 
-    ctx.lineWidth = 1.4;
-    ctx.strokeStyle = "rgba(42, 80, 117, 0.5)";
-    ctx.beginPath();
-    for (var j = headStart; j < trail.length; j += 1) {
-      var q = project(trail[j], rect);
-      if (j === headStart) ctx.moveTo(q.x, q.y);
-      else ctx.lineTo(q.x, q.y);
+      var t = b / (bandCount - 1);
+      ctx.globalAlpha = minAlpha + (maxAlpha - minAlpha) * t;
+      ctx.beginPath();
+      for (var i = start; i < end; i += 1) {
+        var p = project(trail[i], rect);
+        if (i === start) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
     }
-    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   function animate() {
@@ -79,7 +93,12 @@
     window.requestAnimationFrame(animate);
   }
 
+  refreshTheme();
   resize();
   animate();
   window.addEventListener("resize", resize);
+  window.addEventListener("themechange", refreshTheme);
+  try {
+    window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refreshTheme);
+  } catch (e) {}
 })();

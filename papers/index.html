@@ -5,15 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Papers - Aayushman Manda</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
   </head>
   <body>
     <nav class="site-nav" aria-label="Primary navigation">
       <a href="/">Home</a>
       <a href="/papers/" aria-current="page">Papers</a>
-      <a href="/teaching/">Teaching</a>
+      <a href="/teaching/">Academic Activities</a>
       <a href="/research_blog/">Research Blog</a>
       <a href="https://github.com/aayushmanda" target="_blank" rel="noopener">GitHub</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
     </nav>
 
     <main class="page">
@@ -34,5 +47,6 @@
         </article>
       </div>
     </main>
+    <script src="/assets/theme-toggle.js" defer></script>
   </body>
 </html>
