@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Privacy Saturation in Noisy-SGD - Aayushman Manda</title>
+    <meta name="description" content="Why the privacy loss of noisy SGD can stop growing after enough iterations, and what that means for how we account for privacy in trained models.">
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/css/style.css">
     <script>
@@ -17,63 +18,198 @@
       <a href="/papers/">Papers</a>
       <a href="/teaching/">Teaching</a>
       <a href="/research_blog/" aria-current="page">Research Blog</a>
+      <a href="https://github.com/aayushmanda" target="_blank" rel="noopener">GitHub</a>
     </nav>
 
     <main class="page">
-      <h1 class="page-title">Privacy Saturation in Noisy-SGD</h1>
+      <p class="eyebrow">Differential Privacy · Optimization</p>
+      <h1 class="page-title tight">Privacy Saturation in Noisy-SGD</h1>
+      <p class="byline">
+        <span class="authors">Aayushman</span>, Kaushik Doddamani, and Pranav
+        <span class="sep">&middot;</span>
+        August 17, 2026
+        <span class="sep">&middot;</span>
+        IIT Madras
+      </p>
 
       <article class="content">
-        <p class="meta">August 17, 2026</p>
-
-        <p>
-          Noisy stochastic gradient descent, also known as DP-SGD or Noisy-SGD, modifies standard SGD by clipping per-sample gradients and adding Gaussian noise to minibatch updates.
+        <p class="lead">
+          Every standard privacy accountant for differentially private training tells you the same story: run the optimizer for more steps, and you pay more privacy budget. Full stop, no exceptions. It turns out that story is wrong &mdash; or at least incomplete &mdash; for a large and useful class of training problems. Under the right conditions, privacy loss can stop growing altogether, long before training ends.
         </p>
 
         <p>
-          Classical privacy analyses compose the privacy cost of each step. In the Renyi Differential Privacy framework, this often gives a bound that grows linearly with the number of iterations:
+          This post walks through why that happens, working from the paper <a href="https://arxiv.org/abs/2205.13710">&ldquo;Privacy of Noisy Stochastic Gradient Descent: More Iterations without More Privacy Loss&rdquo;</a> by Altschuler and Talwar (2023), which we studied and wrote up as a course report. The result is called <strong>privacy saturation</strong>, and the argument behind it is a nice example of how thinking about an algorithm as a <em>dynamical process</em>, rather than a sequence of independent leaks, changes the answer.
+        </p>
+
+        <div class="share-row">
+          <span class="share-label">Share</span>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html&amp;text=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss">Share on X</a>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://bsky.app/intent/compose?text=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html">Share on Bluesky</a>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html&amp;title=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss">Share on Reddit</a>
+        </div>
+
+        <hr>
+
+        <h2>The puzzle</h2>
+
+        <p>
+          Differentially private machine learning almost always means one thing in practice: <strong>DP-SGD</strong>, also called Noisy-SGD. It's an easy modification of ordinary stochastic gradient descent &mdash; clip each per-example gradient so no single training point can dominate the update, average the clipped gradients over a minibatch, and add Gaussian noise before applying the step. Popularized by Abadi et al. in 2016, it's now the default primitive behind TensorFlow Privacy, Opacus, and most JAX-based private training stacks.
+        </p>
+
+        <p>
+          The question this post is about is not how well Noisy-SGD optimizes &mdash; it's how its <em>privacy cost</em> behaves as a function of the number of iterations \(T\). The textbook analysis treats every noisy gradient step as its own little privacy-releasing mechanism, then composes the cost across all \(T\) steps. Using Rényi differential privacy (RDP), which composes cleanly, this gives a bound of the form
         </p>
 
         <p class="math">
-          $$\epsilon_{\mathrm{RDP}}(T) \le \frac{\alpha L^2}{n^2 \sigma^2}T.$$
+          $$\varepsilon_{\mathrm{RDP}}(T) \lesssim \frac{\alpha L^2}{n^2 \sigma^2}\,T.$$
         </p>
 
         <p>
-          The tension is that a training run can converge while the bound keeps increasing. The privacy saturation view treats Noisy-SGD as a noisy contractive dynamical system rather than a sequence of independent disclosures.
+          That bound is <em>linear</em> in \(T\). Every additional epoch, every additional pass over the data, adds a fixed increment to your privacy budget &mdash; even if your model converged thousands of steps ago and is no longer doing anything with the data except quietly restating what it already learned. That has always felt like it's leaving something on the table: composition bounds are worst-case over what an adversary could extract from each step, but they don't account for the fact that Noisy-SGD is not a sequence of unrelated queries. It's an iterative, noisy, <em>contractive</em> process, and contractive processes tend to forget.
         </p>
 
+        <h2>The saturation result</h2>
+
         <p>
-          Under convexity, smoothness, and projection to a bounded domain \(K\) of diameter \(D\), the privacy loss can flatten after a burn-in scale on the order of
+          Altschuler and Talwar make that intuition precise. For convex, \(L\)-Lipschitz, \(M\)-smooth losses over a bounded convex domain \(K \subset \mathbb{R}^d\) of diameter \(D\), and step size \(\eta \le 2/M\), the privacy loss doesn't grow forever &mdash; it grows for a while and then flattens.
+        </p>
+
+        <div class="callout">
+          <p class="callout-label">The result, informally</p>
+          <p class="math">
+            $$\varepsilon_{\mathrm{RDP}}(T) \;\lesssim\; \frac{\alpha L^2}{n^2\sigma^2}\, \min\!\left\{T,\; \frac{Dn}{L\eta}\right\}.$$
+          </p>
+          <p>
+            The privacy loss increases linearly with \(T\), exactly as before &mdash; but only up to a burn-in time \(\bar T \approx \dfrac{Dn}{L\eta}\). After that, running the optimizer for more iterations costs essentially nothing extra.
+          </p>
+        </div>
+
+        <p>
+          This is <strong>privacy saturation</strong>: past the burn-in period \(\bar T\), you can keep training &mdash; more epochs, more passes, more convergence &mdash; without the privacy accountant charging you for it beyond a constant factor. That's a qualitatively different shape than the straight line every standard composition theorem draws.
+        </p>
+
+        <h2>Why saturation happens: two forces in tension</h2>
+
+        <p>
+          The mechanism behind the bound is a competition between two effects that push in opposite directions as you look further back into the training run.
+        </p>
+
+        <h3>Sampling makes recent steps expensive</h3>
+
+        <p>
+          At each iteration, a changed data point only shows up in the minibatch with probability \(b/n\). This is the standard <strong>privacy amplification by sampling</strong> argument used throughout the DP-SGD literature: because the sensitive point is usually absent from the minibatch, each individual step is cheaper than it would be if the point were always included. Applied to a block of \(R\) consecutive iterations, this contributes a cost that grows <em>linearly</em> in \(R\):
         </p>
 
         <p class="math">
-          $$\bar{T} \approx \frac{Dn}{L\eta}.$$
+          $$\text{sampling cost} \;\approx\; \frac{\alpha L^2}{n^2\sigma^2}\, R.$$
         </p>
 
+        <h3>Iteration makes distant steps cheap</h3>
+
         <p>
-          A representative saturation statement is:
+          Here's the part that composition-based analyses miss entirely. Take two runs of Noisy-SGD on adjacent datasets, and suppose that \(R\) iterations before the end they were sitting at two different points inside \(K\). Because \(K\) has diameter \(D\), those two starting points are at most \(D\) apart. From there, every subsequent update is a projected gradient step &mdash; which, for \(\eta \le 2/M\), is <strong>non-expansive</strong> &mdash; composed with an injection of Gaussian noise. Non-expansive maps don't amplify the gap between the two trajectories, and Gaussian noise blurs whatever gap remains. So the more iterations \(R\) you let this contract-and-blur process run for, the harder it becomes to tell the two trajectories apart. This is <strong>privacy amplification by iteration</strong> (Feldman, Mironov, Talwar, and Thakurta), and it contributes a cost that <em>shrinks</em> as \(R\) grows:
         </p>
 
         <p class="math">
-          $$\mathcal{D}_\alpha(P_{W_T}\|P_{W_T'}) \le \frac{\alpha L^2}{n^2\sigma^2}\min\left\{T,\left\lceil\frac{Dn}{L\eta}\right\rceil\right\}.$$
+          $$\text{iteration cost} \;\approx\; \frac{\alpha D^2}{\eta^2\sigma^2 R}.$$
+        </p>
+
+        <h3>Balancing the two</h3>
+
+        <p>
+          Add the two contributions and you get a function of \(R\) that first falls, then rises &mdash; classic \(AR + B/R\) shape. Minimizing over \(R\) (formally: taking the derivative and setting it to zero) gives the optimal window length
+        </p>
+
+        <p class="math">
+          $$R^{\star} \;\asymp\; \frac{Dn}{L\eta},$$
         </p>
 
         <p>
-          The key idea is to combine geometric contraction with shifted Renyi divergence. The iterate dynamics continually forget state discrepancies, while injected Gaussian noise limits how distinguishable adjacent trajectories can remain.
+          which is exactly the burn-in time \(\bar T\) from the theorem above. Below this scale, sampling composition dominates and the bound is linear in \(T\), same as the naive analysis. Above it, the story changes: no matter how large \(T\) gets, you only ever need to pay for the last \(\bar T\) iterations, because the earlier ones have been geometrically &ldquo;forgotten&rdquo; by the contraction.
         </p>
 
-        <h2>Takeaways</h2>
+        <h2>The proof, sketched</h2>
+
+        <p>
+          The elegant move in the proof is a <strong>restart trick</strong>: instead of trying to bound the privacy loss of all \(T\) iterations directly, fix a cutoff \(\tau = T - R\) and only analyze the final \(R\) iterations. The first \(\tau\) iterations are never directly &ldquo;charged&rdquo; &mdash; their only relevance is that they leave both trajectories, \(W_\tau\) and \(W_\tau'\), somewhere inside the bounded set \(K\), and therefore no more than \(D\) apart. This is where boundedness of the domain is doing real work: it's what lets the proof throw away everything before time \(\tau\) and still get a meaningful starting condition for the last stretch.
+        </p>
+
+        <p>
+          Making the restart argument rigorous requires a way to talk about &ldquo;this initial gap of size \(D\)&rdquo; and &ldquo;this later divergence in distribution&rdquo; in the same currency. That's where <strong>optimal transport</strong> enters. The key object is the <strong>shifted Rényi divergence</strong>
+        </p>
+
+        <p class="math">
+          $$D_\alpha^{(z)}(\mu \Vert \nu) \;=\; \inf_{\tilde\mu:\, W_\infty(\tilde\mu,\mu) \le z} D_\alpha(\tilde\mu \Vert \nu),$$
+        </p>
+
+        <p>
+          where \(W_\infty\) is the \(\infty\)-Wasserstein distance &mdash; the smallest \(z\) such that \(\mu\) and \(\nu\) can be coupled so that the corresponding random variables never differ by more than \(z\). The shifted divergence says: before you measure how distinguishable two distributions are, you're allowed to move one of them by up to \(z\) at no cost. It's exactly the right notion for a noisy contractive process, because it lets you separate two very different kinds of distance:
+        </p>
+
+        <ul>
+          <li><strong>Geometric displacement</strong> &mdash; how far apart two states are in \(\mathbb{R}^d\), tracked with \(W_\infty\) and shrunk by contraction.</li>
+          <li><strong>Distributional distinguishability</strong> &mdash; how easy it is to tell two distributions apart, tracked with Rényi divergence and controlled by the Gaussian noise.</li>
+        </ul>
+
+        <p>
+          A pair of lemmas convert between the two: a <strong>shift-reduction lemma</strong> shows that convolving with Gaussian noise turns a unit of remaining geometric shift \(a\) into a Rényi cost of \(\alpha a^2 / 2\sigma^2\), and a <strong>contraction-reduction lemma</strong> shows that pushing two coupled points through a non-expansive map never increases the shift you need to account for. Chaining these step by step from \(t=T\) back to \(t=\tau+1\), and using that the total gap at time \(\tau\) is at most \(D\), gives the diameter-aware bound
+        </p>
+
+        <p class="math">
+          $$D_\alpha\!\left(P_{W_T} \,\Vert\, P_{W_T'}\right) \;\le\; \frac{\alpha}{2}\sum_{t=\tau+1}^{T} \frac{a_t^2}{\sigma_t^2}$$
+        </p>
+
+        <p>
+          for any allocation of &ldquo;shift budget&rdquo; \(a_{\tau+1},\dots,a_T\) that sums (with the per-step contraction amounts) to exactly cancel the initial gap \(D\) by the end. Choosing this allocation uniformly, \(a_t = D/R\), and combining with the sampling-term bound from the same window, reproduces the \(AR + B/R\) trade-off above &mdash; and optimizing over \(\tau\) (equivalently, over \(R\)) gives the saturation theorem.
+        </p>
+
+        <h2>What this means in practice</h2>
+
+        <p>
+          The practical upshot is a genuinely different way to think about the privacy cost of training runs that have converged:
+        </p>
+
         <ol>
-          <li>Privacy loss need not accumulate indefinitely in noisy contractive optimization systems.</li>
-          <li>Optimal transport and shifted Renyi divergence help separate geometric contraction from statistical distinguishability.</li>
-          <li>For bounded domains, DP-SGD can admit iteration-dependent privacy analyses that saturate after a characteristic time scale.</li>
+          <li>Privacy accounting for DP-SGD need not be a straight line against iteration count &mdash; in the convex, smooth, bounded-domain setting, it plateaus.</li>
+          <li>The plateau point \(\bar T \approx Dn/(L\eta)\) is set by the geometry of the problem (domain size, dataset size, smoothness, step size) rather than by how long you happen to train for.</li>
+          <li>This matters most exactly where naive composition hurts most: many-epoch training, federated settings with huge round counts, and any pipeline where you'd like the freedom to keep optimizing without continuously eating into an \(\varepsilon\) budget.</li>
         </ol>
+
+        <h2>Where this breaks down</h2>
+
+        <p>
+          The saturation argument leans on three ingredients that don't come for free: convexity, smoothness with a step size satisfying \(\eta \le 2/M\), and a bounded domain \(K\). Take any of them away and the restart trick loses its footing &mdash; without a diameter \(D\), there's no bound on the initial gap at time \(\tau\); without non-expansiveness, contraction can't be relied on to shrink that gap at all. Extending privacy saturation to the nonconvex, unconstrained settings that dominate modern deep learning &mdash; where DP-SGD is actually deployed most often &mdash; remains open, and is, to us, the most interesting direction the paper leaves on the table.
+        </p>
+
+        <hr>
+
+        <p class="note">
+          This report was written for a graduate course on privacy and optimal transport. An LLM was used only for permitted support tasks &mdash; understanding background material, locating related work, and clarifying technical concepts. All factual claims, references, equations, and proof steps were independently verified against the original papers and standard scholarly sources.
+        </p>
+
+        <p>
+          <a href="/papers/privacy-saturation-noisy-sgd.pdf">Read the full report (PDF)</a>, which includes the complete proofs, the background on computational optimal transport, and the appendix lemmas summarized above.
+        </p>
 
         <h2>References</h2>
         <ul>
-          <li>Altschuler and Talwar. Privacy of noisy stochastic gradient descent: More iterations without more privacy loss. 2023.</li>
-          <li>Abadi et al. Deep learning with differential privacy. CCS 2016.</li>
-          <li>Mironov. Renyi differential privacy. IEEE CSF 2017.</li>
+          <li>Altschuler, J. M. and Talwar, K. <em>Privacy of noisy stochastic gradient descent: More iterations without more privacy loss.</em> arXiv:2205.13710, 2023.</li>
+          <li>Abadi, M. et al. <em>Deep learning with differential privacy.</em> ACM CCS, 2016.</li>
+          <li>Mironov, I. <em>Rényi differential privacy.</em> IEEE CSF, 2017.</li>
+          <li>Dwork, C., McSherry, F., Nissim, K., and Smith, A. <em>Calibrating noise to sensitivity in private data analysis.</em> TCC, 2006.</li>
+          <li>Dwork, C. and Roth, A. <em>The algorithmic foundations of differential privacy.</em> Foundations and Trends in Theoretical Computer Science, 2014.</li>
+          <li>Dwork, C. and Feldman, V. <em>Privacy-preserving prediction.</em> arXiv:1803.10266, 2018.</li>
+          <li>Feldman, V., Mironov, I., Talwar, K., and Thakurta, A. <em>Privacy amplification by iteration.</em> FOCS, 2018.</li>
+          <li>Wang, Y.-X., Balle, B., and Kasiviswanathan, S. P. <em>Subsampled Rényi differential privacy and analytical moments accountant.</em> AISTATS, 2019.</li>
+          <li>Peyré, G. and Cuturi, M. <em>Computational optimal transport.</em> arXiv:1803.00567, 2020.</li>
         </ul>
+
+        <div class="share-row">
+          <span class="share-label">Share</span>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html&amp;text=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss">Share on X</a>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://bsky.app/intent/compose?text=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html">Share on Bluesky</a>
+          <a class="share-btn" target="_blank" rel="noopener" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fprivacy-saturation-noisy-sgd.html&amp;title=Privacy%20Saturation%20in%20Noisy-SGD%3A%20why%20more%20iterations%20don%27t%20always%20mean%20more%20privacy%20loss">Share on Reddit</a>
+        </div>
       </article>
     </main>
   </body>
