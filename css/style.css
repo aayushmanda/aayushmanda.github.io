@@ -1,0 +1,182 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color: #333;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  line-height: 1.48;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
+.site-nav,
+.page {
+  width: min(100% - 2.5rem, 920px);
+  margin: 0 auto;
+}
+
+.site-nav {
+  padding-top: 1.4rem;
+}
+
+.site-nav a {
+  display: inline-block;
+  margin-right: 1.1rem;
+  color: #676767;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current="page"] {
+  color: #222;
+}
+
+.page {
+  padding: 6.2rem 0 5rem;
+}
+
+.home-title,
+.page-title {
+  margin: 0 0 3.4rem;
+  color: #333;
+  font-size: 2.05rem;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.home-hero {
+  position: relative;
+  min-height: 260px;
+  margin-bottom: 0.8rem;
+}
+
+.home-hero .home-title {
+  position: relative;
+  z-index: 1;
+  padding-top: 5.2rem;
+}
+
+.lorenz-canvas {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 260px;
+  opacity: 0.82;
+}
+
+.content {
+  color: #333;
+  font-size: 1.18rem;
+  font-weight: 450;
+}
+
+.content p,
+.content ul,
+.content ol {
+  margin: 0 0 1.55rem;
+}
+
+.content li {
+  margin-bottom: 0.45rem;
+}
+
+.portrait {
+  float: right;
+  width: 38vw;
+  max-width: 360px;
+  aspect-ratio: 1.2 / 1;
+  margin: 2.2rem 0 1rem 2.5rem;
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+
+.entry {
+  margin-bottom: 2.1rem;
+}
+
+.entry h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.entry p {
+  margin-bottom: 0.8rem;
+}
+
+.meta {
+  color: #666;
+  font-size: 0.98rem;
+}
+
+.math {
+  overflow-x: auto;
+}
+
+@media (max-width: 720px) {
+  .site-nav,
+  .page {
+    width: min(100% - 2rem, 920px);
+  }
+
+  .site-nav {
+    padding-top: 1rem;
+  }
+
+  .site-nav a {
+    margin-right: 0.75rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.92rem;
+  }
+
+  .page {
+    padding-top: 4.25rem;
+    padding-bottom: 3rem;
+  }
+
+  .home-title,
+  .page-title {
+    margin-bottom: 1.8rem;
+    font-size: 1.85rem;
+  }
+
+  .home-hero {
+    min-height: 190px;
+  }
+
+  .home-hero .home-title {
+    padding-top: 3.4rem;
+  }
+
+  .lorenz-canvas {
+    height: 190px;
+  }
+
+  .content {
+    font-size: 1.06rem;
+    line-height: 1.5;
+  }
+
+  .portrait {
+    float: none;
+    display: block;
+    width: 100%;
+    max-width: 390px;
+    margin: 0 0 1.5rem;
+  }
+}

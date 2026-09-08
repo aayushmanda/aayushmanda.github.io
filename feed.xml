@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Aayushman Manda</title>
+    <link>https://aayushmanda.github.io/</link>
+    <description>Research notes and updates from Aayushman Manda.</description>
+    <item>
+      <title>Privacy Saturation in Noisy-SGD</title>
+      <link>https://aayushmanda.github.io/research_blog/privacy-saturation-noisy-sgd.html</link>
+      <guid>https://aayushmanda.github.io/research_blog/privacy-saturation-noisy-sgd.html</guid>
+      <pubDate>Mon, 17 Aug 2026 00:00:00 +0000</pubDate>
+      <description>A mathematical exploration of privacy saturation in noisy stochastic gradient descent.</description>
+    </item>
+  </channel>
+</rss>

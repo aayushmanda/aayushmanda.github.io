@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Privacy Saturation in Noisy-SGD - Aayushman Manda</title>
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+      window.MathJax = { tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]] } };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/papers/">Papers</a>
+      <a href="/teaching/">Teaching</a>
+      <a href="/research_blog/" aria-current="page">Research Blog</a>
+    </nav>
+
+    <main class="page">
+      <h1 class="page-title">Privacy Saturation in Noisy-SGD</h1>
+
+      <article class="content">
+        <p class="meta">August 17, 2026</p>
+
+        <p>
+          Noisy stochastic gradient descent, also known as DP-SGD or Noisy-SGD, modifies standard SGD by clipping per-sample gradients and adding Gaussian noise to minibatch updates.
+        </p>
+
+        <p>
+          Classical privacy analyses compose the privacy cost of each step. In the Renyi Differential Privacy framework, this often gives a bound that grows linearly with the number of iterations:
+        </p>
+
+        <p class="math">
+          $$\epsilon_{\mathrm{RDP}}(T) \le \frac{\alpha L^2}{n^2 \sigma^2}T.$$
+        </p>
+
+        <p>
+          The tension is that a training run can converge while the bound keeps increasing. The privacy saturation view treats Noisy-SGD as a noisy contractive dynamical system rather than a sequence of independent disclosures.
+        </p>
+
+        <p>
+          Under convexity, smoothness, and projection to a bounded domain \(K\) of diameter \(D\), the privacy loss can flatten after a burn-in scale on the order of
+        </p>
+
+        <p class="math">
+          $$\bar{T} \approx \frac{Dn}{L\eta}.$$
+        </p>
+
+        <p>
+          A representative saturation statement is:
+        </p>
+
+        <p class="math">
+          $$\mathcal{D}_\alpha(P_{W_T}\|P_{W_T'}) \le \frac{\alpha L^2}{n^2\sigma^2}\min\left\{T,\left\lceil\frac{Dn}{L\eta}\right\rceil\right\}.$$
+        </p>
+
+        <p>
+          The key idea is to combine geometric contraction with shifted Renyi divergence. The iterate dynamics continually forget state discrepancies, while injected Gaussian noise limits how distinguishable adjacent trajectories can remain.
+        </p>
+
+        <h2>Takeaways</h2>
+        <ol>
+          <li>Privacy loss need not accumulate indefinitely in noisy contractive optimization systems.</li>
+          <li>Optimal transport and shifted Renyi divergence help separate geometric contraction from statistical distinguishability.</li>
+          <li>For bounded domains, DP-SGD can admit iteration-dependent privacy analyses that saturate after a characteristic time scale.</li>
+        </ol>
+
+        <h2>References</h2>
+        <ul>
+          <li>Altschuler and Talwar. Privacy of noisy stochastic gradient descent: More iterations without more privacy loss. 2023.</li>
+          <li>Abadi et al. Deep learning with differential privacy. CCS 2016.</li>
+          <li>Mironov. Renyi differential privacy. IEEE CSF 2017.</li>
+        </ul>
+      </article>
+    </main>
+  </body>
+</html>
