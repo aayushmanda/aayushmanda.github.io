@@ -422,6 +422,63 @@ a {
   vertical-align: super;
 }
 
+.oneline {
+  margin: 0 0 1.4rem;
+  padding: 0.1rem 0 0.1rem 1rem;
+  border-left: 3px solid var(--accent);
+  color: var(--fg);
+  font-size: 1.14rem;
+  line-height: 1.45;
+}
+
+.oneline strong {
+  font-weight: 700;
+}
+
+details.proof {
+  margin: 0 0 1.7rem;
+  padding: 0.85rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elevated);
+}
+
+details.proof > summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+details.proof > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.proof > summary::before {
+  content: "▸\00a0";
+}
+
+details.proof[open] > summary::before {
+  content: "▾\00a0";
+}
+
+details.proof[open] > summary {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+details.proof > *:last-child {
+  margin-bottom: 0;
+}
+
+details.proof .math {
+  font-size: 0.97rem;
+}
+
 .content td.win {
   color: var(--accent);
   font-weight: 700;
