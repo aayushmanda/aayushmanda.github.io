@@ -152,9 +152,9 @@ a {
 
 .lorenz-inline {
   display: inline-block;
-  width: 110px;
-  height: 40px;
-  margin-left: 0.6rem;
+  width: 56px;
+  height: 32px;
+  margin-left: 0.5rem;
   vertical-align: middle;
   opacity: 0.9;
 }
@@ -434,8 +434,8 @@ a {
   }
 
   .lorenz-inline {
-    width: 84px;
-    height: 32px;
+    width: 44px;
+    height: 26px;
   }
 
   .content {

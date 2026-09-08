@@ -56,7 +56,7 @@
     var scale = rect.height / designHeight;
     return {
       x: rect.width * 0.5 + point.x * 8.3 * scale,
-      y: rect.height * 0.7 - point.z * 4.2 * scale + point.y * 1.4 * scale
+      y: rect.height * 0.76 - point.z * 4.2 * scale + point.y * 1.4 * scale
     };
   }
 
