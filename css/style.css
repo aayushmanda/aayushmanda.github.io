@@ -335,6 +335,65 @@ a {
   overflow-x: auto;
 }
 
+.unlock-box {
+  margin: 0 0 1.75rem;
+  padding: 1.3rem 1.5rem;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  font-size: 1.05rem;
+}
+
+.unlock-box p {
+  margin: 0 0 1rem;
+}
+
+#unlock-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 0.6rem;
+}
+
+.unlock-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 0.5rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.unlock-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+#unlock-form .btn {
+  margin: 0;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: transparent;
+  cursor: pointer;
+}
+
+#unlock-form .btn:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.unlock-error {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
 .eyebrow {
   margin: 0 0 0.9rem;
   color: var(--accent);
@@ -529,5 +588,28 @@ a {
 
   .share-row {
     margin-top: 0.6rem;
+  }
+
+  .callout,
+  .unlock-box {
+    padding: 1.05rem 1.1rem;
+  }
+
+  .tldr-panel {
+    padding: 0.85rem 1rem;
+  }
+
+  #unlock-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #unlock-form .btn {
+    justify-content: center;
+  }
+
+  .byline-avatar {
+    width: 36px;
+    height: 36px;
   }
 }

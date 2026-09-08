@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /research_blog/where-credit-enters-a-computation.html
 
 Sitemap: https://aayushmanda.github.io/sitemap.xml
