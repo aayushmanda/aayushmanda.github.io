@@ -397,6 +397,29 @@ a {
 .content td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.content thead th.group {
+  border-bottom: 1px solid var(--fg-soft);
+  text-align: center;
+}
+
+.content thead th.sub {
+  border-top: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.content thead th[rowspan] {
+  vertical-align: bottom;
+}
+
+.content table sup {
+  font-size: 0.7em;
+  line-height: 0;
+  vertical-align: super;
 }
 
 .content td.win {
