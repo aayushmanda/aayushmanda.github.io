@@ -5,6 +5,27 @@
     <link>https://aayushmanda.github.io/</link>
     <description>Research notes and updates from Aayushman Manda.</description>
     <item>
+      <title>Grading With Evidence: A Multi-Agent Auto-Assessment System</title>
+      <link>https://aayushmanda.github.io/research_blog/auto-assessment-agent.html</link>
+      <guid>https://aayushmanda.github.io/research_blog/auto-assessment-agent.html</guid>
+      <pubDate>Sat, 12 Sep 2026 00:00:00 +0000</pubDate>
+      <description>An evidence-anchored, multi-agent grading pipeline for handwritten and typed answer sheets, with deterministic score auditing and memory that carries across submissions.</description>
+    </item>
+    <item>
+      <title>Diffusion Autoencoders: Reproducing a Meaningful, Decodable Latent Space</title>
+      <link>https://aayushmanda.github.io/research_blog/diffusion-autoencoders.html</link>
+      <guid>https://aayushmanda.github.io/research_blog/diffusion-autoencoders.html</guid>
+      <pubDate>Sat, 12 Sep 2026 00:00:00 +0000</pubDate>
+      <description>Notes from reproducing Diffusion Autoencoders (CVPR 2022): a semantic encoder that gives diffusion models a compact, decodable, and editable latent code.</description>
+    </item>
+    <item>
+      <title>Poking Inside a Language Model with NNsight</title>
+      <link>https://aayushmanda.github.io/research_blog/mechanistic-interpretability-nnsight.html</link>
+      <guid>https://aayushmanda.github.io/research_blog/mechanistic-interpretability-nnsight.html</guid>
+      <pubDate>Sat, 12 Sep 2026 00:00:00 +0000</pubDate>
+      <description>How NNsight's tracing-context API makes activation patching, logit-lens probes, and targeted ablations practical without a bespoke hook harness.</description>
+    </item>
+    <item>
       <title>Privacy Saturation in Noisy-SGD</title>
       <link>https://aayushmanda.github.io/research_blog/privacy-saturation-noisy-sgd.html</link>
       <guid>https://aayushmanda.github.io/research_blog/privacy-saturation-noisy-sgd.html</guid>
