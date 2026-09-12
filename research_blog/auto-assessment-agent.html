@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Grading With Evidence: A Multi-Agent Auto-Assessment System - Aayushman</title>
+    <meta name="description" content="Notes on building an evidence-anchored, multi-agent grading pipeline that transcribes, solves, evaluates, and audits handwritten and typed answer sheets — and remembers past mistakes so it doesn't repeat them.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Grading With Evidence: A Multi-Agent Auto-Assessment System">
+    <meta property="og:description" content="An evidence-anchored, multi-agent grading pipeline for handwritten and typed answer sheets, with deterministic score auditing and memory that carries across submissions.">
+    <meta property="og:url" content="https://aayushmanda.github.io/research_blog/auto-assessment-agent.html">
+    <meta property="og:image" content="https://aayushmanda.github.io/image/profile.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Grading With Evidence: A Multi-Agent Auto-Assessment System">
+    <meta name="twitter:description" content="An evidence-anchored, multi-agent grading pipeline for handwritten and typed answer sheets, with deterministic score auditing and memory that carries across submissions.">
+    <meta name="twitter:image" content="https://aayushmanda.github.io/image/profile.jpg">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=10">
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/papers/">Papers</a>
+      <a href="/teaching/">Academic Activities</a>
+      <a href="/research_blog/" aria-current="page">Research Blog</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+    </nav>
+
+    <main class="page">
+      <div class="tag-row">
+        <span class="tag">Multi-Agent Systems</span>
+        <span class="tag">LLM Applications</span>
+        <span class="tag">Education Technology</span>
+      </div>
+      <h1 class="page-title tight">Grading With Evidence: A Multi-Agent Auto-Assessment System</h1>
+
+      <div class="byline">
+        <img class="byline-avatar" src="/image/profile.jpg" alt="">
+        <div class="byline-info">
+          <p class="byline-name">By <span class="authors">Aayushman</span></p>
+          <p class="byline-sub">September 12, 2026 &middot; IIT Madras &middot; 11 min read</p>
+        </div>
+        <div class="share-row">
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html&amp;text=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html&amp;title=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <article class="content">
+        <p class="lead">
+          Grading is one of those tasks that's simultaneously mechanical and irreducibly judgment-heavy: applying a rubric consistently across fifty submissions is tedious in a way that invites shortcuts, but every one of those fifty submissions can be wrong in a slightly different way that a rigid rubric doesn't anticipate. A single LLM call that reads a rubric and a scanned answer sheet and spits out a score doesn't actually solve this &mdash; it just moves the inconsistency somewhere less visible. The <a href="https://github.com/aayushmanda/da7016_project" target="_blank" rel="noopener">Auto-Assessment Agent</a> is my attempt at doing better: a pipeline of narrow, single-purpose agents that transcribe, solve, evaluate, and audit a submission in separate steps, so that every score is traceable back to a specific quote from the student's actual work rather than a single opaque judgment call.
+        </p>
+
+        <h2>The pipeline</h2>
+
+        <p>
+          The system handles PDFs, images, plain text, and DOCX, and grades either a single submission or a whole batch against the same rubric. The shape of the pipeline is deliberately linear and inspectable:
+        </p>
+
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 1.</strong> Pipeline stages, roles, and what runs each one.</caption>
+            <thead>
+              <tr><th>Stage</th><th>Role</th><th>Runs on</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Transcriber</td><td>Reads handwritten/scanned PDFs and images into structured text, preserving notation, tables, and page layout</td><td>Gemini (vision)</td></tr>
+              <tr><td>Solver</td><td>Generates a reference solution when no official model answer is supplied</td><td>Gemini</td></tr>
+              <tr><td>Evaluator</td><td>Grades criterion-by-criterion with verbatim evidence quotes; for diagram/sketch/construction questions, looks at the original page images directly rather than trusting the transcript alone</td><td>Gemini</td></tr>
+              <tr><td>Auditor</td><td>Checks score bounds and criterion-total arithmetic</td><td class="num win">Python</td></tr>
+              <tr><td>Regrade Agent</td><td>Re-checks a specific disputed criterion against the stored evidence before changing a score</td><td>Gemini</td></tr>
+              <tr><td>Chat Agent</td><td>Answers follow-up questions grounded in the saved assessment, favoring Socratic guidance over handing over answers</td><td>Gemini</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          The row I'd call out first is the Auditor, and specifically that it isn't an LLM call. Score arithmetic &mdash; does each criterion's awarded points fall within its stated bounds, does the total actually sum to what's reported &mdash; is exactly the kind of thing a language model can get subtly wrong under load, and exactly the kind of thing a few lines of Python can check with certainty. Whenever a task decomposes into "requires judgment" and "requires arithmetic," it's worth asking whether the arithmetic half needs a model at all.
+        </p>
+
+        <h2>Design principles</h2>
+
+        <ul>
+          <li><strong>Evidence before assertion.</strong> Every grading decision cites the student's actual work &mdash; a verbatim quote from the transcript, or for diagram questions, the actual page image. A score without an attached quote isn't trustworthy on its own terms; it's just an assertion.</li>
+          <li><strong>Separate responsibilities.</strong> Transcription, solving, evaluation, auditing, regrading, and chat are distinct steps with their own contracts. If the evaluator hallucinates a criterion score, that's traceable to one stage rather than buried inside one long, undifferentiated LLM call.</li>
+          <li><strong>Deterministic where possible.</strong> Score arithmetic is checked in Python, not by another LLM call, for the reason above.</li>
+          <li><strong>Explicit uncertainty.</strong> Illegible or ambiguous handwriting sets a <code>needs_human_review</code> flag rather than the system silently guessing and reporting a confident-looking number.</li>
+          <li><strong>Actionable feedback.</strong> Every question gets a concrete "what to do differently next time," not just right/wrong.</li>
+        </ul>
+
+        <p>
+          The diagram-question handling under "evidence before assertion" is worth dwelling on, because it's a real, specific failure mode rather than a hypothetical one: OCR-style transcription of a hand-drawn circuit diagram or geometric construction is unreliable in a way that transcription of handwritten prose usually isn't &mdash; a transcript can describe a diagram as "roughly correct" while missing the one connection that makes it wrong. So for exactly those question types, the Evaluator is given the original page image alongside the transcript instead of trusting the transcript's description of it. It's a narrow fix, but it's the kind of fix you only find by looking at where a general-purpose pipeline actually breaks on a specific input type.
+        </p>
+
+        <h2>Agentic memory: two feedback loops, not one</h2>
+
+        <p>
+          The part of this project I find most interesting isn't the per-submission pipeline &mdash; it's that the Evaluator isn't stateless across runs. Two lightweight memory stores feed back into every grading call:
+        </p>
+
+        <div class="callout">
+          <p class="callout-label">Per-student weak-area memory</p>
+          <p>
+            After each assessment, recurring weak concepts are tracked per signed-in student &mdash; strengthening on repeat misses, fading once mastered &mdash; and fed back into the next grading pass. This is what lets feedback say a mistake <em>persisted</em> or <em>improved</em>, rather than repeating the same generic tip on every submission regardless of whether the student already acted on it.
+          </p>
+        </div>
+
+        <div class="callout">
+          <p class="callout-label">Cross-submission grading corrections</p>
+          <p>
+            When a "Request re-evaluation" confirms a genuine grading mistake, that correction is remembered against the exact question paper. The next student graded on the same test doesn't get the same mistake repeated &mdash; a dispute from one student improves grading consistency for everyone who took the same assessment.
+          </p>
+        </div>
+
+        <p>
+          Both of these matter for the same underlying reason: a grading system that treats every submission as a fresh, context-free judgment call will make the same category of mistake over and over, on the same test, for different students, and will give the same generic feedback to a student who's already fixed the gap it's pointing at. Identity for this memory is the signed-in Google account, proven through a server-issued, HMAC-signed session token &mdash; not a self-reported header, and not the anonymous per-browser ID used for cosmetic session state elsewhere in the app. That distinction matters because weak-area memory is exactly the kind of state you don't want to be spoofable by just changing a client-side value.
+        </p>
+
+        <h2>Disputing a grade</h2>
+
+        <p>
+          The regrade flow is designed to avoid both failure modes you'd expect from an automated dispute system: blindly trusting the original score, and blindly trusting whatever the student claims. A disputed criterion is re-checked against the stored evidence quote before any score changes, and the request itself has to point at something concrete:
+        </p>
+
+        <pre><code>curl -X POST "http://127.0.0.1:8000/api/regrade" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "assessment_id": "YOUR_ASSESSMENT_UUID",
+    "question_id": "Question 1",
+    "claimed_mistake": "You said I did not show 2x = 12, but it appears in my solution.",
+    "evidence_quote": "2x = 12"
+  }'</code></pre>
+
+        <p>
+          If the Regrade Agent confirms the mistake, the correction feeds the cross-submission memory described above. If it doesn't, the original score stands with an explanation &mdash; the point isn't to make disputes always succeed, it's to make the resolution process itself evidence-anchored rather than another opaque judgment call.
+        </p>
+
+        <h2>Stack and shape of the code</h2>
+
+        <p>
+          The backend is FastAPI with Pydantic contracts between agent stages, SQLite for persistence, and the Google Gen AI SDK for the Gemini calls (plus the OpenAI SDK for Bodhan's text-to-speech in Agent Chat). The frontend is React and Vite, with react-markdown and KaTeX for rendering the math that shows up in a lot of these submissions. Both ship together via Docker Compose, with the frontend served through nginx and proxying <code>/api</code> and <code>/ws</code> to the backend container.
+        </p>
+
+        <p>
+          Model choice is centralized rather than hard-coded per call: <code>GET /api/models</code> reports the live configuration for every pipeline stage, and the frontend's own Models page reads that endpoint directly instead of duplicating a static list that can drift out of sync with what's actually deployed.
+        </p>
+
+        <h2>What I'd still change</h2>
+
+        <ul>
+          <li>The weak-area memory currently strengthens on repeat misses and fades on mastery, but the exact decay schedule is a heuristic, not something validated against how students actually retain and re-lapse on a concept &mdash; it would be worth checking against real longitudinal grading data rather than intuition.</li>
+          <li>History currently keeps the five most recent assessment runs per login (a batch counts as one run). That's a reasonable default for a small deployment, but it means the cross-run weak-area signal is bounded by how much history survives, which matters more for a semester-long course than for a one-off quiz.</li>
+          <li>The diagram/sketch fallback to raw page images is a targeted fix for one known failure mode; there are probably other question types with similarly specific transcription failure modes I haven't hit yet.</li>
+        </ul>
+
+        <hr>
+
+        <p class="note">
+          This is a personal project write-up, not a paper. The repository is at <a href="https://github.com/aayushmanda/da7016_project" target="_blank" rel="noopener">github.com/aayushmanda/da7016_project</a>. An LLM was used for organizing this write-up from the project's own README and code; the architecture, design decisions, and code described are my own.
+        </p>
+
+        <div class="share-row">
+          <span class="share-label">Share</span>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html&amp;text=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html&amp;title=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </article>
+    </main>
+    <script src="/assets/theme-toggle.js?v=9" defer></script>
+    <script src="/assets/back-to-top.js?v=9" defer></script>
+  </body>
+</html>
