@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Poking Inside a Language Model with NNsight - Aayushman</title>
+    <meta name="description" content="An introduction to NNsight's tracing-context API for mechanistic interpretability — lazy intervention graphs, proxies, activation patching, and why remote execution changes what's practical to try.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Poking Inside a Language Model with NNsight">
+    <meta property="og:description" content="How NNsight's tracing-context API makes activation patching, logit-lens probes, and targeted ablations practical without a bespoke hook harness.">
+    <meta property="og:url" content="https://aayushmanda.github.io/research_blog/mechanistic-interpretability-nnsight.html">
+    <meta property="og:image" content="https://aayushmanda.github.io/image/profile.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Poking Inside a Language Model with NNsight">
+    <meta name="twitter:description" content="How NNsight's tracing-context API makes activation patching, logit-lens probes, and targeted ablations practical without a bespoke hook harness.">
+    <meta name="twitter:image" content="https://aayushmanda.github.io/image/profile.jpg">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=10">
+  </head>
+  <body>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/papers/">Papers</a>
+      <a href="/teaching/">Academic Activities</a>
+      <a href="/research_blog/" aria-current="page">Research Blog</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+    </nav>
+
+    <main class="page">
+      <div class="tag-row">
+        <span class="tag">Mechanistic Interpretability</span>
+        <span class="tag">Transformers</span>
+        <span class="tag">Tooling</span>
+      </div>
+      <h1 class="page-title tight">Poking Inside a Language Model with NNsight</h1>
+
+      <div class="byline">
+        <img class="byline-avatar" src="/image/profile.jpg" alt="">
+        <div class="byline-info">
+          <p class="byline-name">By <span class="authors">Aayushman</span></p>
+          <p class="byline-sub">September 12, 2026 &middot; 9 min read</p>
+        </div>
+        <div class="share-row">
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html&amp;text=Poking%20Inside%20a%20Language%20Model%20with%20NNsight">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Poking%20Inside%20a%20Language%20Model%20with%20NNsight%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html&amp;title=Poking%20Inside%20a%20Language%20Model%20with%20NNsight">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <article class="content">
+        <p class="lead">
+          Most mechanistic interpretability questions have the same shape: does a specific piece of the network &mdash; this attention head, this MLP neuron, this residual stream position at this layer &mdash; causally matter for a specific behavior? Answering that with raw PyTorch means registering forward hooks, remembering to remove them, threading activations captured at one point in the network into an intervention at another, and rewriting most of that plumbing every time you change models. <a href="https://nnsight.net/" target="_blank" rel="noopener">NNsight</a>, from the NDIF project, replaces the plumbing with a single abstraction &mdash; a tracing context that lets you read and write a model's internals as if the forward pass had already happened, even though nothing has run yet.
+        </p>
+
+        <h2>The abstraction: a lazy intervention graph</h2>
+
+        <p>
+          The entry point is a context manager around a forward pass:
+        </p>
+
+        <pre><code>from nnsight import LanguageModel
+
+model = LanguageModel("gpt2", device_map="auto")
+
+with model.trace("The capital of France is") as tracer:
+    hidden = model.transformer.h[6].output[0].save()
+    logits = model.lm_head.output.save()
+
+print(hidden.shape, logits.shape)</code></pre>
+
+        <p>
+          Nothing inside the <code>with</code> block executes immediately. Writing <code>model.transformer.h[6].output</code> doesn't hand you a tensor &mdash; it hands you a <strong>proxy</strong>, an object standing in for "the output of this module, once the trace actually runs." Indexing it, calling <code>.save()</code> on it, doing arithmetic with it: all of that gets recorded onto an intervention graph rather than executed against real data. Only when the <code>with</code> block exits does NNsight run the actual forward pass once, feed real tensors through that recorded graph, and materialize whatever you called <code>.save()</code> on. This is the whole trick, and it's what makes everything downstream easy: you get to write intervention code that reads like it's manipulating activations directly, while what you're actually doing is specifying a graph that gets compiled against the model exactly once.
+        </p>
+
+        <h2>Why the laziness matters beyond convenience</h2>
+
+        <p>
+          Building the graph symbolically before running anything has a consequence that isn't just ergonomic. Because the trace is a description of what to compute rather than a sequence of side effects on a live Python object, the same code can target a model running on someone else's hardware. NDIF hosts large open-weight models remotely and executes submitted intervention graphs against them, sending back only the small activations you asked to save &mdash; not the full hidden state at every layer, and not the model's weights to your machine. You write the same <code>model.trace(...)</code> block whether <code>model</code> is a small model on your own GPU or a large one served remotely; the interpretability code doesn't change, only where it executes.
+        </p>
+
+        <h2>A minimal logit lens</h2>
+
+        <p>
+          One of the oldest mechanistic-interpretability tricks is the logit lens: take the residual stream at an intermediate layer, run it through the model's own unembedding matrix as if it were the final layer, and read off what the model would "say" if it stopped computing right there. With a tracing context this is a few lines rather than a custom forward hook that has to know exactly where the final layer norm and unembedding live:
+        </p>
+
+        <pre><code>with model.trace("The capital of France is") as tracer:
+    layer_logits = []
+    for layer in model.transformer.h:
+        normed = model.transformer.ln_f(layer.output[0])
+        layer_logits.append(model.lm_head(normed).save())
+
+# layer_logits[i] now holds the vocabulary distribution the model would
+# produce if generation stopped after block i, for every layer at once.</code></pre>
+
+        <p>
+          Decoding the top token from each saved distribution and watching it change across layers is a cheap, qualitative way to see roughly where in the network a factual answer or a syntactic decision seems to firm up &mdash; before you've committed to a hypothesis worth a more expensive, targeted experiment.
+        </p>
+
+        <h2>Activation patching in one trace</h2>
+
+        <p>
+          The logit lens only reads activations. The genuinely causal move &mdash; the one behind causal tracing and ROME-style locating-and-editing work &mdash; is activation patching: run a "clean" prompt and a "corrupted" prompt, and splice an activation captured from the clean run into the corrupted run to see how much of the clean behavior comes back. NNsight's invoker lets a single trace cover both runs, so the patch doesn't need to leave Python at all:
+        </p>
+
+        <pre><code>clean_prompt = "The Eiffel Tower is located in the city of"
+corrupt_prompt = "The Colosseum is located in the city of"
+
+with model.trace() as tracer:
+    with tracer.invoke(clean_prompt):
+        clean_act = model.transformer.h[6].output[0].save()
+
+    with tracer.invoke(corrupt_prompt):
+        model.transformer.h[6].output[0][:] = clean_act
+        patched_logits = model.lm_head.output.save()</code></pre>
+
+        <p>
+          If patching layer 6's output is enough to make the corrupted run's top prediction shift toward "Paris," that's evidence layer 6 is carrying (or has already committed to) the information the final answer depends on. Sweeping this same patch across every layer and token position, and plotting how much of the clean-minus-corrupt logit gap each patch restores, is exactly how causal-tracing figures in interpretability papers get made &mdash; and it's a loop over the same six-line pattern above, not six lines per layer.
+        </p>
+
+        <h2>Ablation as a cheaper causal test</h2>
+
+        <p>
+          Patching needs a matched pair of prompts. Sometimes the simpler question is just "does this component matter at all," which a direct edit answers more cheaply:
+        </p>
+
+        <pre><code>with model.trace(clean_prompt) as tracer:
+    # zero out one attention head's contribution at a chosen layer
+    heads = model.transformer.h[6].attn.output[0]
+    heads[:, :, head_index, :] = 0
+    ablated_logits = model.lm_head.output.save()</code></pre>
+
+        <p>
+          Comparing <code>ablated_logits</code> against the unmodified run's logits for the token you care about is a minimal necessity test: if zeroing a head barely moves the prediction, that head almost certainly isn't doing the work your hypothesis assigns it, at least not on this input.
+        </p>
+
+        <h2>What this doesn't give you for free</h2>
+
+        <p>
+          NNsight removes the mechanical friction of writing an intervention, and that's a real thing to remove &mdash; a working ablation or patch that used to take an afternoon of hook-registration bookkeeping is now a few lines. It doesn't remove the actual interpretability work. You still need a hypothesis about which layer, head, or position plausibly matters before you write the trace; the tool tests a specific causal claim, it doesn't generate one. A single successful patch or a suggestive logit-lens trajectory is evidence, not proof &mdash; the standard worry in this literature is that an intervention can restore a metric for a reason unrelated to the mechanism you think you're isolating, which is why serious causal-tracing work follows up a single patch with sweeps across layers and positions, path patching to isolate which downstream computation actually uses the patched value, and ablations that check necessity as well as sufficiency. And remote execution through NDIF is only as useful as the specific models it hosts at a given time &mdash; it widens what's practical to try, it doesn't make every model equally available.
+        </p>
+
+        <hr>
+
+        <p class="note">
+          This is an introductory walkthrough of the NNsight API, not a write-up of a specific research result. Code in this post follows the library's documented public API at <a href="https://nnsight.net/" target="_blank" rel="noopener">nnsight.net</a>; I haven't independently benchmarked the patches shown here against a published causal-tracing result, and the logit-lens and patching examples are meant to illustrate the pattern rather than report findings. An LLM was used only for organizing this write-up.
+        </p>
+
+        <h2>References</h2>
+        <ul>
+          <li>NDIF / NNsight documentation. <a href="https://nnsight.net/" target="_blank" rel="noopener">nnsight.net</a></li>
+          <li>Meng, K., Bau, D., Andonian, A., and Belinkov, Y. <em>Locating and editing factual associations in GPT.</em> NeurIPS, 2022.</li>
+          <li>nostalgebraist. <em>Interpreting GPT: the logit lens.</em> LessWrong, 2020.</li>
+        </ul>
+
+        <div class="share-row">
+          <span class="share-label">Share</span>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html&amp;text=Poking%20Inside%20a%20Language%20Model%20with%20NNsight">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Poking%20Inside%20a%20Language%20Model%20with%20NNsight%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fmechanistic-interpretability-nnsight.html&amp;title=Poking%20Inside%20a%20Language%20Model%20with%20NNsight">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </article>
+    </main>
+    <script src="/assets/theme-toggle.js?v=9" defer></script>
+    <script src="/assets/back-to-top.js?v=9" defer></script>
+  </body>
+</html>
