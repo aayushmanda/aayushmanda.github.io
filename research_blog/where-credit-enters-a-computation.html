@@ -16,13 +16,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=10">
+    <link rel="stylesheet" href="/css/style.css?v=11">
     <script>
       window.MathJax = { tex: { inlineMath: [["\\(", "\\)"], ["$", "$"]] } };
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
   <body>
+    <div id="reading-progress" class="reading-progress" aria-hidden="true"></div>
     <nav class="site-nav" aria-label="Primary navigation">
       <a href="/">Home</a>
       <a href="/papers/">Papers</a>
@@ -57,7 +58,7 @@
           <p class="callout-label">Locked</p>
           <p>This note is password-protected. Enter the password to decrypt it in your browser &mdash; the text is encrypted at rest and nothing is sent to a server.</p>
           <form id="unlock-form" autocomplete="off">
-            <input type="password" id="unlock-password" class="unlock-input" placeholder="Password" required>
+            <input type="password" id="unlock-password" class="unlock-input" placeholder="Password" autofocus required>
             <button type="submit" class="btn">Unlock</button>
           </form>
           <p id="unlock-error" class="unlock-error" hidden>Incorrect password.</p>
@@ -69,17 +70,135 @@
       <script>
         (function () {
           var payload = JSON.parse(document.getElementById("unlock-data").textContent);
+          // Scoped to this ciphertext, so a future re-publish of the note invalidates any old cached copy automatically.
+          var CACHE_KEY = "unlocked-note-" + payload.ciphertext.slice(0, 24);
+
           function b64ToBytes(b64) {
             var bin = atob(b64);
             var bytes = new Uint8Array(bin.length);
             for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
             return bytes;
           }
+
           var form = document.getElementById("unlock-form");
           var pwInput = document.getElementById("unlock-password");
           var errorEl = document.getElementById("unlock-error");
           var lockScreen = document.getElementById("lock-screen");
           var contentEl = document.getElementById("unlocked-content");
+          var progressEl = document.getElementById("reading-progress");
+
+          function slugify(text) {
+            return (
+              text
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, "")
+                .trim()
+                .replace(/\s+/g, "-") || "section"
+            );
+          }
+
+          function buildToc() {
+            var headings = contentEl.querySelectorAll("h2");
+            if (headings.length < 3) return;
+            var used = {};
+            var toc = document.createElement("nav");
+            toc.className = "toc";
+            toc.setAttribute("aria-label", "Table of contents");
+            var label = document.createElement("p");
+            label.className = "toc-label";
+            label.textContent = "On this page";
+            var list = document.createElement("ol");
+            for (var i = 0; i < headings.length; i++) {
+              var h = headings[i];
+              var slug = slugify(h.textContent);
+              var id = slug;
+              var n = 2;
+              while (used[id]) id = slug + "-" + n++;
+              used[id] = true;
+              h.id = id;
+              var li = document.createElement("li");
+              var a = document.createElement("a");
+              a.href = "#" + id;
+              a.textContent = h.textContent;
+              li.appendChild(a);
+              list.appendChild(li);
+            }
+            toc.appendChild(label);
+            toc.appendChild(list);
+            headings[0].parentNode.insertBefore(toc, headings[0]);
+            return toc;
+          }
+
+          function buildProofControls(afterEl) {
+            var proofs = contentEl.querySelectorAll("details.proof");
+            if (proofs.length < 2) return;
+            var bar = document.createElement("p");
+            bar.className = "proof-controls";
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "btn";
+            btn.textContent = "Expand all proofs";
+            var expanded = false;
+            btn.addEventListener("click", function () {
+              expanded = !expanded;
+              for (var i = 0; i < proofs.length; i++) proofs[i].open = expanded;
+              btn.textContent = expanded ? "Collapse all proofs" : "Expand all proofs";
+            });
+            bar.appendChild(btn);
+            if (afterEl && afterEl.parentNode) {
+              afterEl.parentNode.insertBefore(bar, afterEl.nextSibling);
+            } else {
+              contentEl.insertBefore(bar, contentEl.firstChild);
+            }
+          }
+
+          function scrollToHash() {
+            if (!location.hash) return;
+            var target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+            if (target) {
+              setTimeout(function () {
+                target.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 60);
+            }
+          }
+
+          function renderContent(html, skipCache) {
+            contentEl.innerHTML = html;
+            var toc = buildToc();
+            buildProofControls(toc);
+            lockScreen.hidden = true;
+            contentEl.hidden = false;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+              window.MathJax.typesetPromise([contentEl]).then(scrollToHash);
+            } else {
+              scrollToHash();
+            }
+            if (!skipCache) {
+              try {
+                sessionStorage.setItem(CACHE_KEY, html);
+              } catch (e) {}
+            }
+          }
+
+          function updateProgress() {
+            if (!progressEl) return;
+            var doc = document.documentElement;
+            var scrollTop = window.scrollY || doc.scrollTop;
+            var height = doc.scrollHeight - doc.clientHeight;
+            var pct = height > 0 ? Math.min(100, Math.max(0, (scrollTop / height) * 100)) : 0;
+            progressEl.style.width = pct + "%";
+          }
+          window.addEventListener("scroll", updateProgress, { passive: true });
+          window.addEventListener("resize", updateProgress);
+          updateProgress();
+
+          // Re-open a note unlocked earlier in this browser tab, without asking for the password again.
+          document.addEventListener("DOMContentLoaded", function () {
+            try {
+              var cached = sessionStorage.getItem(CACHE_KEY);
+              if (cached) renderContent(cached, true);
+            } catch (e) {}
+          });
 
           form.addEventListener("submit", function (e) {
             e.preventDefault();
@@ -105,13 +224,8 @@
               })
               .then(function (decrypted) {
                 var html = new TextDecoder().decode(decrypted);
-                contentEl.innerHTML = html;
-                lockScreen.hidden = true;
-                contentEl.hidden = false;
                 pwInput.value = "";
-                if (window.MathJax && window.MathJax.typesetPromise) {
-                  window.MathJax.typesetPromise([contentEl]);
-                }
+                renderContent(html, false);
               })
               .catch(function () {
                 errorEl.hidden = false;
