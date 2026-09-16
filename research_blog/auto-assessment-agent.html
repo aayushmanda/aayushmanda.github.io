@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css?v=11">
+    <link rel="stylesheet" href="/css/style.css?v=12">
   </head>
   <body>
     <nav class="site-nav" aria-label="Primary navigation">
@@ -50,7 +50,7 @@
         <img class="byline-avatar" src="/image/profile.jpg" alt="">
         <div class="byline-info">
           <p class="byline-name">By <span class="authors">Aayushman</span></p>
-          <p class="byline-sub">September 12, 2026 &middot; IIT Madras &middot; 11 min read</p>
+          <p class="byline-sub">September 12, 2026 &middot; IIT Madras &middot; 12 min read</p>
         </div>
         <div class="share-row">
           <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fauto-assessment-agent.html&amp;text=Grading%20With%20Evidence%3A%20A%20Multi-Agent%20Auto-Assessment%20System">
@@ -69,6 +69,11 @@
         <p class="lead">
           Grading is one of those tasks that's simultaneously mechanical and irreducibly judgment-heavy: applying a rubric consistently across fifty submissions is tedious in a way that invites shortcuts, but every one of those fifty submissions can be wrong in a slightly different way that a rigid rubric doesn't anticipate. A single LLM call that reads a rubric and a scanned answer sheet and spits out a score doesn't actually solve this &mdash; it just moves the inconsistency somewhere less visible. The <a href="https://github.com/aayushmanda/da7016_project" target="_blank" rel="noopener">Auto-Assessment Agent</a> is my attempt at doing better: a pipeline of narrow, single-purpose agents that transcribe, solve, evaluate, and audit a submission in separate steps, so that every score is traceable back to a specific quote from the student's actual work rather than a single opaque judgment call.
         </p>
+
+        <figure>
+          <video src="https://github.com/user-attachments/assets/8414c893-983e-415e-8052-bd8e116cb301" controls preload="metadata" width="100%"></video>
+          <figcaption class="note">A run through the app: uploading a rubric and answer sheet, the Score Feed with evidence-anchored feedback, and Agent Chat.</figcaption>
+        </figure>
 
         <h2>The pipeline</h2>
 
@@ -95,6 +100,48 @@
 
         <p>
           The row I'd call out first is the Auditor, and specifically that it isn't an LLM call. Score arithmetic &mdash; does each criterion's awarded points fall within its stated bounds, does the total actually sum to what's reported &mdash; is exactly the kind of thing a language model can get subtly wrong under load, and exactly the kind of thing a few lines of Python can check with certainty. Whenever a task decomposes into "requires judgment" and "requires arithmetic," it's worth asking whether the arithmetic half needs a model at all.
+        </p>
+
+        <h2>Layers under the agentic construction</h2>
+
+        <p>
+          The six-stage table above is the pipeline's public shape. What actually makes it hold together under real input &mdash; illegible handwriting, a student quoting their own answer sheet dishonestly, a rubric with an embedded "ignore previous instructions" line, a schema with too many optional fields &mdash; sits one level below that, in four mechanisms that recur across every agent rather than living in any one of them. None of these is a new algorithm; each is a known idea from the broader agents literature. What's specific to this project is applying all four consistently to the same pipeline, and using plain code instead of a second model call wherever the check can be made deterministic.
+        </p>
+
+        <h3>Layer 1 &mdash; schema-constrained generation, with rejection as the retry signal</h3>
+
+        <p>
+          Every agent call goes through one function, <code>json_response()</code>, which hands Gemini's structured-output mode a Pydantic model's JSON schema and parses the reply straight back into that model. The schemas carry their own invariants as <code>model_validator</code> hooks &mdash; a criterion's score can't exceed its weight, an <code>AssessmentReport</code> can't come back with zero evaluations &mdash; and a violation raises before the pipeline ever sees the malformed object. <code>call_with_retries</code> treats that raised <code>ValidationError</code> as just another retryable failure alongside a 429 or a 500, so a broken JSON object doesn't fail the request; it silently asks the model again. This is generate-validate-retry rather than generate-and-hope, and the "validate" step is ordinary Pydantic, not a second LLM call grading the first one's output.
+        </p>
+
+        <p>
+          The decomposition of the pipeline itself is downstream of the same idea. Reference-diagram generation for questions asking for a sketch or construction used to live inside the main grading schema, as one more optional field per question. It was pulled out into its own isolated call after it measurably increased the rate of the model returning an empty <code>evaluations</code> list &mdash; a bigger, more heavily-conditioned schema made the one call that matters most (the actual score) less reliable. That's a concrete, observed instance of a general pattern: schema complexity trades against structured-output reliability, and the fix isn't a smarter prompt, it's fewer optional fields per call.
+        </p>
+
+        <h3>Layer 2 &mdash; grounding checked after the fact, not just requested up front</h3>
+
+        <p>
+          Asking a model to cite evidence is not the same as verifying it did. The Evaluator is instructed to copy a verbatim <code>evidence_quote</code> for every criterion, but the <code>AuditAgent</code> doesn't take that on faith: it normalizes whitespace and case, then substring-checks every quote against the actual transcript. A quote that isn't literally present flags the question <code>needs_human_review</code> instead of being trusted because it looked plausible. The same substring check is reused on the other side of the system, to validate a human's own <code>evidence_quote</code> in a regrade request before the Regrade Agent is even called &mdash; a dispute pointing at text that was never written doesn't get to consume a model call.
+        </p>
+
+        <p>
+          The Auditor also catches a second, subtler failure that has nothing to do with the transcript: a question scored above zero with an empty <code>student_answer</code> field is a contradiction between two things the same model call generated, and it gets flagged rather than passed through. This is closer to a self-consistency check across a single generation's own fields than to retrieval-style grounding, and it costs nothing beyond an <code>if</code> statement &mdash; the recurring theme is that a lot of what looks like it needs a second opinion from another model call can instead be checked in a few lines of Python, because the thing being checked (is this string present, do these two fields agree) doesn't require judgment, just comparison.
+        </p>
+
+        <h3>Layer 3 &mdash; every upload is adversarial input, on both the way in and the way out</h3>
+
+        <p>
+          A single constant, <code>UNTRUSTED_DATA_RULE</code>, is prepended to every agent prompt that touches uploaded content: the question paper, rubric, answer key, and student submission are reference data, never instructions, and any embedded directions inside them that try to change behavior, leak the prompt, or dictate a score are to be ignored. Every one of those sections is also wrapped in explicit <code>=== BEGIN X ===</code> / <code>=== END X ===</code> delimiters before it reaches the model. This is the instructional-hierarchy idea &mdash; keep untrusted content clearly fenced off from instructions &mdash; applied as one shared helper rather than as a patch on whichever endpoint happened to get a bad upload first.
+        </p>
+
+        <p>
+          The same posture holds on the way back out. The Evaluator can generate reference-diagram SVGs that get rendered directly in the browser, and <code>sanitize_reference_svg</code> strips anything with a <code>&lt;script&gt;</code>, an event-handler attribute, a <code>&lt;foreignObject&gt;</code>, or an external <code>href</code>/<code>src</code>, even though the prompt already tells the model not to produce any of those &mdash; the code comment is blunt about why: "a prompt instruction is not a security boundary." The regrade path applies the same distrust to the model's own edits: after a confirmed dispute, the code forcibly restores the question's <code>question_text</code>, <code>student_answer</code>, and <code>reference_diagram_svg</code> from the original record and clamps the score to the original <code>max_score</code>, so a regrade can correct a score and its feedback but can never quietly rewrite what was actually asked or what the student actually wrote.
+        </p>
+
+        <h3>Layer 4 &mdash; correction memory shared across requests, not just within one</h3>
+
+        <p>
+          Most agent memory patterns operate within a single conversation or a single user's history. This one deliberately crosses both boundaries: a regrade dispute confirmed for one student becomes a <code>known_corrections</code> note injected into the Evaluator's prompt for every other student subsequently graded against that exact question paper, and per-student weak-area memory is keyed to a server-verified Google identity rather than to a session or browser fingerprint that a client could spoof. The mechanics of both stores are covered in the next section; the architectural point here is narrower &mdash; this is state shared across concurrent invocations of the pipeline serving different end users, not state private to one agent's own reasoning loop, which is also why the orchestrator class is written to hold no per-request instance state at all: a single shared instance serves every request, so anything like "the current assessment" would leak between users if it were stashed on <code>self</code> instead of passed explicitly through every method call.
         </p>
 
         <h2>Design principles</h2>
