@@ -9,28 +9,18 @@
     return total;
   }
 
-  function row(kind, op, detail, value, hot) {
-    var mlp = op === "ADD" || op === "COUNT" ? " mlp" : "";
-    return (
-      '<div class="wire' + mlp + (hot ? " is-hot" : "") + '">' +
-      '<span class="wire-kind">' + kind + "</span>" +
-      '<span class="wire-op">' + op + "</span>" +
-      "<span>" + detail + "</span>" +
-      '<strong class="sim-val">' + value + "</strong>" +
-      "</div>"
-    );
-  }
-
   function mount(el) {
     if (el.getAttribute("data-ready")) return;
     el.setAttribute("data-ready", "1");
 
     var mode = "process";
     var step = 0;
-    var say = el.querySelector("[data-say]");
     var count = el.querySelector("[data-count]");
     var word = el.querySelector("[data-word]");
-    var rows = el.querySelector("[data-rows]");
+    var block1 = el.querySelector("[data-b1]");
+    var block2Label = el.querySelector("[data-b2-label]");
+    var block2 = el.querySelector("[data-b2]");
+    var equation = el.querySelector("[data-eq]");
     var tape = el.querySelector("[data-tape]");
     var tapeLabel = el.querySelector("[data-tape-label]");
     var nextBtn = el.querySelector("[data-next]");
@@ -52,47 +42,46 @@
       }
       tokens +=
         '<button type="button" class="sim-tok sim-colon' + (atColon ? " is-on" : "") + '" data-jump="6">' +
-        "<b>:</b><span>" + (mode === "process" ? "copy" : "sum") + "</span></button>";
+        "<b>:</b><span>colon</span></button>";
       word.innerHTML = tokens;
+
+      if (!atColon) {
+        var letter = letters[step];
+        var bit = bits[step];
+        block1.textContent = bit
+          ? "The query is a. This letter is " + letter + ", so it matches. Block 1 writes the mark 1 and stops. It does not add anything."
+          : "The query is a. This letter is " + letter + ", so it misses. Block 1 writes the mark 0 and stops. It does not add anything.";
+      } else {
+        block1.textContent = "Block 1 is already finished. The marks on banana are 0, 1, 0, 1, 0, 1. The colon is not a letter, so no new mark is written.";
+      }
 
       if (mode === "process" && !atColon) {
         var prev = states[step];
-        var bit = bits[step];
         var next = states[step + 1];
-        var raw = prev + bit;
-        var math = raw === next
-          ? prev + " + " + bit + " = " + next
-          : prev + " + " + bit + " wraps to " + next;
-        say.textContent = bit
-          ? letters[step] + " matches a. Head 1 copies the previous value " + prev + ". Head 2 copies the match bit 1. ADD computes " + math + ", and the model emits " + next + "."
-          : letters[step] + " is not a. Head 1 copies the previous value " + prev + ". Head 2 copies the match bit 0. ADD leaves the value at " + next + ", and the model emits it.";
-        rows.innerHTML =
-          row("Head 1", "MOV", "value → prev", String(prev), true) +
-          row("Head 2", "MOV", "match → cur", String(bit), true) +
-          row("MLP", "ADD", math, String(next), true);
+        var raw = prev + bits[step];
+        block2Label.textContent = "Block 2 · running count · add this one mark";
+        block2.textContent = "Start from the count already written, " + prev + ", and add the mark from block 1, which is " + bits[step] + ".";
+        equation.textContent = raw === next
+          ? prev + " + " + bits[step] + " = " + next
+          : prev + " + " + bits[step] + " = " + raw + ", and " + raw + " modulo 3 is " + next;
       } else if (mode === "process") {
-        say.textContent = "The running count is 1, 2, 2, 0, 0, 1. Head 3 copies the last value into out. ADD stays off, because the colon is not a letter. The readout emits the answer 1.";
-        rows.innerHTML =
-          row("Head 3", "MOV", "last value → out", "1", true) +
-          row("MLP", "ADD", "off at the colon", "—", false);
+        block2Label.textContent = "Block 2 · running count · read the last number";
+        block2.textContent = "The additions are finished. The numbers written down are 1, 2, 2, 0, 0, 1. The colon copies the last one. That is the answer.";
+        equation.textContent = "answer = 1";
       } else if (!atColon) {
         var soFar = sumThrough(step);
-        say.textContent = bits[step]
-          ? letters[step] + " is a match, so the sum of bits grows to " + soFar + ". The modular counter does not move. Outcome waits until the colon."
-          : letters[step] + " is a miss, so the sum of bits stays " + soFar + ". The modular counter does not move. Outcome waits until the colon.";
-        rows.innerHTML =
-          row("Head 1", "AVG", "sum of match bits so far", String(soFar), true) +
-          row("Head 2", "MOV", "start value, not used yet", "1", false) +
-          row("MLP", "COUNT", "waits for the colon", "—", false);
+        block2Label.textContent = "Block 2 · one sum · still waiting";
+        block2.textContent = bits[step]
+          ? "This mark is 1, so it joins the pile. The pile is now " + soFar + ". The count itself stays at the start value, 1, until the colon."
+          : "This mark is 0, so the pile stays " + soFar + ". The count itself stays at the start value, 1, until the colon.";
+        equation.textContent = "pile = " + soFar + ", count still 1";
       } else {
-        say.textContent = "The match bits sum to 3. Head 2 copies the start value 1. COUNT computes 1 + 3 = 4, and 4 modulo 3 is 1. That is the only number the model emits.";
-        rows.innerHTML =
-          row("Head 1", "AVG", "sum of every match bit", "3", true) +
-          row("Head 2", "MOV", "start value", "1", true) +
-          row("MLP", "COUNT", "1 + 3 mod 3", "1", true);
+        block2Label.textContent = "Block 2 · one sum at the colon";
+        block2.textContent = "Now the marks are added together, and the start value is added after that. Nothing was written down between the letters.";
+        equation.textContent = "0 + 1 + 0 + 1 + 0 + 1 = 3, then 1 + 3 = 4, and 4 modulo 3 is 1";
       }
 
-      tapeLabel.textContent = mode === "process" ? "Emitted running count" : "Emitted answer";
+      tapeLabel.textContent = mode === "process" ? "Numbers written down" : "Number written down";
       if (mode === "process") {
         var shown = atColon ? 6 : step + 1;
         var cells = "";

@@ -193,6 +193,16 @@ a {
   overflow-wrap: break-word;
 }
 
+.content mjx-container,
+.content mjx-container * {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+mjx-container {
+  color: inherit;
+}
+
 .content img {
   max-width: 100%;
   height: auto;
@@ -281,6 +291,10 @@ a {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.85rem;
+}
+
+.arch .build-split {
+  grid-template-columns: 1fr;
 }
 
 .build-col {
@@ -569,6 +583,58 @@ a {
 .sim-nav .btn[disabled] {
   opacity: 0.4;
   cursor: default;
+}
+
+.sim-block {
+  margin: 0 0 0.7rem;
+  padding: 0.75rem 0.85rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.sim-block-two {
+  border-left: 3px solid var(--accent);
+}
+
+.content .sim-job,
+.sim-job {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.content .sim-eq,
+.sim-eq {
+  margin: 0.45rem 0 0;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+.worked {
+  margin: 0.15rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.content .worked li,
+.worked li {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  gap: 0.45rem;
+  margin: 0 0 0.32rem;
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+  line-height: 1.4;
+}
+
+.arch-block + .arch-block {
+  margin-top: 0.85rem;
 }
 
 @media (max-width: 720px) {
