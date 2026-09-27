@@ -3,8 +3,8 @@
 }
 
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-serif: "EB Garamond", Georgia, "Times New Roman", serif;
 
   --bg: #fbf5ee;
   --bg-elevated: #f4e9db;
@@ -55,11 +55,15 @@ body {
 }
 
 a {
-  color: var(--accent);
-  font-weight: 600;
+  color: inherit;
+  font-weight: inherit;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.12em;
+}
+
+a:hover {
+  color: var(--accent);
 }
 
 .site-nav,
@@ -79,9 +83,9 @@ a {
 .site-nav a {
   display: inline-block;
   margin-right: 1.1rem;
-  color: var(--fg-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
+  color: var(--fg);
+  font-size: 0.86rem;
+  font-weight: 400;
   text-decoration: none;
 }
 
@@ -94,6 +98,7 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
   width: 34px;
   height: 34px;
   margin-left: auto;
@@ -138,7 +143,7 @@ a {
 }
 
 .page {
-  padding: 6.2rem 0 5rem;
+  padding: 3.1rem 0 5rem;
 }
 
 .home-title,
@@ -155,6 +160,25 @@ a {
 
 .home-title {
   white-space: nowrap;
+}
+
+.cite-authors {
+  margin: 0 0 0.3rem;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 0.98rem;
+}
+
+.content .plain-links {
+  margin-top: 0.2rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+.plain-links .dot {
+  color: var(--fg-soft);
+  font-weight: 400;
+  padding: 0 0.28rem;
 }
 
 .lorenz-inline {
@@ -187,7 +211,7 @@ a {
   max-width: 42rem;
   color: var(--fg);
   font-family: var(--font-serif);
-  font-size: 1.18rem;
+  font-size: 1.28rem;
   font-weight: 400;
   line-height: 1.65;
   overflow-wrap: break-word;
@@ -687,6 +711,14 @@ mjx-container {
   line-height: 1.3;
 }
 
+.entry h2 a {
+  text-decoration: none;
+}
+
+.entry h2 a:hover {
+  text-decoration: underline;
+}
+
 .lock-icon {
   width: 21px;
   height: 21px;
@@ -707,25 +739,28 @@ mjx-container {
 }
 
 .tag-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 0.9rem;
+  margin: 0 0 0.7rem;
+  color: var(--fg-muted);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.45;
 }
 
 .tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.28rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg-elevated);
-  color: var(--fg-muted);
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  display: inline;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: inherit;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.tag + .tag::before {
+  content: " · ";
+  color: var(--fg-soft);
 }
 
 .back-to-top {
@@ -736,19 +771,19 @@ mjx-container {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--bg);
+  width: auto;
+  height: auto;
+  padding: 0.15rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: var(--fg-muted);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
   cursor: pointer;
   opacity: 0;
   transform: translateY(8px);
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease, color 0.15s ease;
 }
 
 .back-to-top.visible {
@@ -792,8 +827,46 @@ mjx-container {
   color: var(--accent);
 }
 
-.tldr[open] .btn {
-  border-color: var(--accent);
+.entry .links {
+  display: block;
+  font-weight: 400;
+}
+
+.entry .links summary::marker {
+  content: "";
+}
+
+.entry .links .dot {
+  color: var(--fg-soft);
+  font-weight: 400;
+  padding: 0 0.4rem;
+  text-decoration: none;
+}
+
+.entry .links > .tldr {
+  display: inline;
+}
+
+.tldr[open] .tldr-panel {
+  margin-top: 0.7rem;
+}
+
+.entry .links summary {
+  display: inline;
+  color: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  list-style: none;
+}
+
+.entry .links summary::-webkit-details-marker {
+  display: none;
+}
+
+.entry .links summary:hover,
+.tldr[open] > summary {
   color: var(--accent);
 }
 
@@ -1190,7 +1263,7 @@ details.proof .math {
   }
 
   .page {
-    padding-top: 4.25rem;
+    padding-top: 2.1rem;
     padding-bottom: 3rem;
   }
 
@@ -1211,7 +1284,7 @@ details.proof .math {
   }
 
   .content {
-    font-size: 1.06rem;
+    font-size: 1.14rem;
   }
 
   .portrait-wrap {
@@ -1276,8 +1349,8 @@ details.proof .math {
   }
 
   .tag {
-    padding: 0.24rem 0.6rem;
-    font-size: 0.72rem;
+    padding: 0;
+    font-size: inherit;
   }
 
   .btn {
@@ -1288,8 +1361,8 @@ details.proof .math {
   .back-to-top {
     right: 1rem;
     bottom: 1rem;
-    width: 38px;
-    height: 38px;
+    width: auto;
+    height: auto;
   }
 }
 
