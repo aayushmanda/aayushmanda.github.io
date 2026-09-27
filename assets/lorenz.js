@@ -4,6 +4,7 @@
 
   var ctx = canvas.getContext("2d");
   var dpr = Math.max(1, window.devicePixelRatio || 1);
+  var supersample = 4;
   var x = 0.01;
   var y = 0;
   var z = 0;
@@ -32,9 +33,12 @@
 
   function resize() {
     var rect = canvas.getBoundingClientRect();
-    canvas.width = Math.max(1, Math.floor(rect.width * dpr));
-    canvas.height = Math.max(1, Math.floor(rect.height * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var scale = dpr * supersample;
+    canvas.width = Math.max(1, Math.floor(rect.width * scale));
+    canvas.height = Math.max(1, Math.floor(rect.height * scale));
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
   }
 
   function step() {
@@ -65,8 +69,10 @@
     ctx.clearRect(0, 0, rect.width, rect.height);
     if (trail.length < 2) return;
 
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.35;
     ctx.strokeStyle = accentColor;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
 
     var bandSize = Math.ceil(trail.length / bandCount);
     for (var b = 0; b < bandCount; b += 1) {
@@ -97,6 +103,8 @@
   resize();
   animate();
   window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(resize);
   window.addEventListener("themechange", refreshTheme);
   try {
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refreshTheme);
