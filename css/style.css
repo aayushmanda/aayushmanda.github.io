@@ -143,7 +143,8 @@ a {
 
 .home-title,
 .page-title {
-  margin: 0 0 3.4rem;
+  max-width: 42rem;
+  margin: 0 0 1.9rem;
   color: var(--fg);
   font-family: var(--font-serif);
   font-size: 2.4rem;
@@ -152,20 +153,43 @@ a {
   letter-spacing: 0;
 }
 
+.home-title {
+  white-space: nowrap;
+}
+
 .lorenz-inline {
   display: inline-block;
-  width: 56px;
-  height: 32px;
-  margin-left: 0.5rem;
+  width: 1.9em;
+  height: 1.05em;
+  margin-left: 0.28em;
   vertical-align: middle;
   opacity: 0.9;
 }
 
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 42rem) 10.5rem;
+  column-gap: 1.75rem;
+  align-items: start;
+}
+
+.home-layout .content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.home-layout .portrait-wrap {
+  grid-column: 2;
+  grid-row: 1;
+}
+
 .content {
+  max-width: 42rem;
   color: var(--fg);
   font-family: var(--font-serif);
   font-size: 1.18rem;
   font-weight: 400;
+  line-height: 1.65;
   overflow-wrap: break-word;
 }
 
@@ -201,10 +225,8 @@ a {
 }
 
 .portrait-wrap {
-  float: right;
-  width: 26vw;
-  max-width: 210px;
-  margin: 0.2rem 0 1rem 2rem;
+  width: 100%;
+  margin: 0;
 }
 
 .portrait {
@@ -583,7 +605,12 @@ details.proof .math {
 }
 
 .page-title.tight {
-  margin-bottom: 1.3rem;
+  margin-bottom: 1.15rem;
+}
+
+.byline,
+.page > .tag-row {
+  max-width: 42rem;
 }
 
 .byline {
@@ -739,24 +766,26 @@ details.proof .math {
 
   .home-title,
   .page-title {
-    margin-bottom: 1.8rem;
+    margin-bottom: 1.15rem;
     font-size: 1.95rem;
   }
 
-  .lorenz-inline {
-    width: 44px;
-    height: 26px;
+  .home-layout {
+    display: block;
+  }
+
+  .home-layout .portrait-wrap,
+  .home-layout .content {
+    grid-column: auto;
+    grid-row: auto;
   }
 
   .content {
     font-size: 1.06rem;
-    line-height: 1.5;
   }
 
   .portrait-wrap {
-    float: none;
-    width: 42vw;
-    max-width: 180px;
+    width: min(42vw, 180px);
     margin: 0 0 1.5rem;
   }
 
@@ -813,8 +842,7 @@ details.proof .math {
   }
 
   .portrait-wrap {
-    width: 55vw;
-    max-width: 150px;
+    width: min(55vw, 150px);
   }
 
   .tag {

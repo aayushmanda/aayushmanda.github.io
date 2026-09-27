@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Aayushman Manda</title>
+    <title>Aayushman</title>
     <link>https://aayushmanda.github.io/</link>
-    <description>Research notes and updates from Aayushman Manda.</description>
+    <description>Research notes and updates from Aayushman.</description>
     <item>
       <title>Grading With Evidence: A Multi-Agent Auto-Assessment System</title>
       <link>https://aayushmanda.github.io/research_blog/auto-assessment-agent.html</link>
