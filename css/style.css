@@ -1734,6 +1734,16 @@ body.is-deck .content {
   text-align: left;
 }
 
+.slide table.trace th,
+.slide table.trace td {
+  text-align: center;
+}
+
+.slide table.trace td.now {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
 .content .slide-table td.ideal {
   background: #eff6ff;
   color: #1e3a8a;
@@ -1857,10 +1867,10 @@ body.is-deck .content {
   color: #111827;
 }
 
-.proof-why {
+.slide .proof-why {
   color: #4b5563;
   margin: 0;
-  font-size: 0.76em;
+  font-size: 0.82em;
   font-style: italic;
   line-height: 1.3;
 }
