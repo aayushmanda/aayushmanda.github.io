@@ -1662,24 +1662,25 @@ body.is-deck .content {
   border: 1px solid #bfdbfe;
   border-radius: 8px;
   overflow: hidden;
+  background: #f8fbff;
 }
 
-.thm-h {
+.slide .thm-h {
   margin: 0;
-  padding: 0.4rem 0.85rem;
-  background: #1d4ed8;
-  color: #ffffff;
+  padding: 0.55rem 0.95rem 0.15rem;
+  background: transparent;
+  color: #1d4ed8;
   font-family: var(--font-serif);
   font-size: 1.05rem;
   font-weight: 700;
 }
 
-.thm-b,
+.slide .thm-b,
 .sketch {
   margin: 0;
-  padding: 0.75rem 0.9rem 0.85rem;
-  background: #eff6ff;
-  color: #111827;
+  padding: 0.35rem 0.95rem 0.85rem;
+  background: transparent;
+  color: #1f2937;
 }
 
 .sketch {
