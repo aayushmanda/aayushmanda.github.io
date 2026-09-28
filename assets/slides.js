@@ -9,7 +9,12 @@
 
     function typesetVisible() {
       var slide = slides[index];
-      if (!slide || slide.getAttribute("data-tex") === "1") return;
+      if (!slide) return;
+      if (slide.getAttribute("data-tex") === "1") {
+        var laidOut = slide.querySelector("mjx-container");
+        if (!laidOut || laidOut.getBoundingClientRect().width > 1) return;
+        slide.removeAttribute("data-tex");
+      }
       var mj = window.MathJax;
       if (!mj || !mj.typesetPromise) {
         if (typesetVisible.waiting) return;
@@ -83,8 +88,6 @@
       }
     });
 
-    var start = 0;
-    if (window.SLIDE_START) start = Math.max(0, Math.min(slides.length - 1, window.SLIDE_START - 1));
-    show(start);
+    show(0);
   };
 })();
