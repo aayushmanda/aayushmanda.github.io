@@ -7,6 +7,36 @@
     var index = 0;
     document.body.classList.add("is-deck");
 
+    function typesetVisible() {
+      var slide = slides[index];
+      if (!slide || slide.getAttribute("data-tex") === "1") return;
+      var mj = window.MathJax;
+      if (!mj || !mj.typesetPromise) {
+        if (typesetVisible.waiting) return;
+        typesetVisible.waiting = true;
+        var again = function () {
+          typesetVisible.waiting = false;
+          typesetVisible();
+        };
+        var script = document.querySelector('script[src*="mathjax"]');
+        if (script) script.addEventListener("load", function () {
+          var ready = window.MathJax && window.MathJax.startup && window.MathJax.startup.promise;
+          if (ready) ready.then(again);
+          else again();
+        }, { once: true });
+        return;
+      }
+      var ready = mj.startup && mj.startup.promise ? mj.startup.promise : Promise.resolve();
+      var target = slide;
+      ready.then(function () {
+        if (target !== slides[index]) return;
+        if (mj.typesetClear) mj.typesetClear([target]);
+        return mj.typesetPromise([target]);
+      }).then(function () {
+        if (target === slides[index]) target.setAttribute("data-tex", "1");
+      }).catch(function () {});
+    }
+
     function show(next) {
       index = Math.max(0, Math.min(slides.length - 1, next));
       for (var i = 0; i < slides.length; i++) {
@@ -18,7 +48,10 @@
       var nextBtn = deck.querySelector("[data-next]");
       if (prev) prev.disabled = index === 0;
       if (nextBtn) nextBtn.disabled = index === slides.length - 1;
+      typesetVisible();
     }
+
+    window.typesetCurrentSlide = typesetVisible;
 
     deck.addEventListener("click", function (event) {
       var control = event.target.closest("[data-prev], [data-next], a");
@@ -50,6 +83,8 @@
       }
     });
 
-    show(0);
+    var start = 0;
+    if (window.SLIDE_START) start = Math.max(0, Math.min(slides.length - 1, window.SLIDE_START - 1));
+    show(start);
   };
 })();

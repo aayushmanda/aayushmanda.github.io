@@ -1485,48 +1485,70 @@ body.is-deck .content {
 
 .deck-bar {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.75rem 1.4rem 0.9rem;
-  border-top: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #4b5563;
-  font-family: var(--font-serif);
-  font-size: 0.95rem;
+  pointer-events: none;
+  background: transparent;
 }
 
-.deck-bar a {
-  color: #1d4ed8;
-  font-weight: 600;
-}
-
+.deck-bar a,
 .deck-bar button {
+  pointer-events: auto;
+  position: absolute;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.7rem;
   height: 2.7rem;
-  margin-left: 0.45rem;
   padding: 0;
   border: 1px solid #93c5fd;
   border-radius: 999px;
   background: #ffffff;
   color: #1d4ed8;
   cursor: pointer;
+  text-decoration: none;
 }
 
-.deck-bar button svg {
+.deck-home {
+  top: 1.15rem;
+  left: 1.25rem;
+}
+
+.deck-bar [data-prev] {
+  left: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.deck-bar [data-next] {
+  right: 1.25rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.deck-bar [data-count] {
+  position: absolute;
+  right: 1.35rem;
+  bottom: 0.85rem;
+  pointer-events: none;
+  color: #4b5563;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+}
+
+.deck-bar button {
+  margin: 0;
+}
+
+.deck-bar button svg,
+.deck-bar a svg {
   display: block;
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
-.deck-bar button:hover:not(:disabled) {
+.deck-bar button:hover:not(:disabled),
+.deck-bar a:hover {
   background: #eff6ff;
   border-color: #1d4ed8;
 }
@@ -1540,7 +1562,7 @@ body.is-deck .content {
   display: none;
   box-sizing: border-box;
   height: 100%;
-  padding: 7vh 8vw 11vh;
+  padding: 8vh 6.5rem 7vh;
   overflow: auto;
   background: #ffffff;
   color: #1f2937;
@@ -1608,6 +1630,12 @@ body.is-deck .content {
   margin: 0.35rem 0 0.7rem;
   color: #111827;
   font-size: 1.05rem;
+  overflow-x: auto;
+}
+
+.slide mjx-container {
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .thm {
@@ -1779,7 +1807,7 @@ body.is-deck .content {
 
 @media (max-width: 720px) {
   .slide {
-    padding: 8vh 1.1rem 12vh;
+    padding: 8vh 4.2rem 6vh;
   }
 
   .panels {
