@@ -110,8 +110,42 @@
 
     window.typesetCurrentSlide = typesetVisible;
 
+    var enterIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+    var exitIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M16 3v3a2 2 0 0 0 2 2h3"/><path d="M8 21v-3a2 2 0 0 0-2-2H3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/></svg>';
+    function toggleFull() {
+      if (document.fullscreenElement) {
+        var exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) exit.call(document);
+      } else {
+        var el = document.documentElement;
+        var req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (!req) return;
+        var pending = req.call(el);
+        if (pending && pending.catch) pending.catch(function () {});
+      }
+    }
+    var bar = deck.querySelector(".deck-bar");
+    if (bar && !bar.querySelector("[data-full]")) {
+      var full = document.createElement("button");
+      full.type = "button";
+      full.setAttribute("data-full", "");
+      function paintFull() {
+        var on = !!document.fullscreenElement;
+        full.setAttribute("aria-label", on ? "Exit full screen" : "Full screen");
+        full.innerHTML = on ? exitIcon : enterIcon;
+      }
+      paintFull();
+      full.addEventListener("click", function (event) {
+        event.stopPropagation();
+        toggleFull();
+      });
+      bar.appendChild(full);
+      document.addEventListener("fullscreenchange", paintFull);
+      document.addEventListener("webkitfullscreenchange", paintFull);
+    }
+
     deck.addEventListener("click", function (event) {
-      var control = event.target.closest("[data-prev], [data-next], a");
+      var control = event.target.closest("[data-prev], [data-next], [data-full], a");
       if (control) {
         if (control.hasAttribute("data-prev")) backward();
         if (control.hasAttribute("data-next")) forward();
@@ -131,6 +165,9 @@
       } else if (event.key === "ArrowLeft" || event.key === "PageUp" || event.key === "Backspace") {
         event.preventDefault();
         backward();
+      } else if (event.key === "f" || event.key === "F") {
+        event.preventDefault();
+        toggleFull();
       } else if (event.key === "Home") {
         event.preventDefault();
         show(0);

@@ -1526,6 +1526,11 @@ body.is-deck .content {
   transform: translateY(-50%);
 }
 
+.deck-bar [data-full] {
+  top: 1.15rem;
+  right: 4.6rem;
+}
+
 .deck-bar [data-count] {
   position: absolute;
   right: 1.35rem;
