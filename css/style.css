@@ -1506,15 +1506,24 @@ body.is-deck .content {
 }
 
 .deck-bar button {
-  margin-left: 0.35rem;
-  padding: 0.28rem 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  margin-left: 0.45rem;
+  padding: 0;
   border: 1px solid #93c5fd;
   border-radius: 999px;
   background: #ffffff;
   color: #1d4ed8;
-  font-family: var(--font-serif);
-  font-size: 0.92rem;
   cursor: pointer;
+}
+
+.deck-bar button svg {
+  display: block;
+  width: 1.45rem;
+  height: 1.45rem;
 }
 
 .deck-bar button:hover:not(:disabled) {
@@ -1578,9 +1587,20 @@ body.is-deck .content {
   color: #1d4ed8;
 }
 
-.slide ul {
-  margin: 0.15rem 0 0.4rem;
-  padding: 0 0 0 1.15rem;
+.slide ul,
+.slide ol {
+  margin: 0.15rem 0 0.45rem;
+  padding: 0 0 0 1.25rem;
+}
+
+.slide li {
+  margin-bottom: 0.38rem;
+}
+
+.block-label {
+  margin: 0.45rem 0 0.25rem;
+  color: #1e3a8a;
+  font-weight: 700;
 }
 
 .slide .math {
@@ -1678,11 +1698,28 @@ body.is-deck .content {
 .paper-fig {
   display: block;
   width: auto;
-  max-width: min(100%, 56rem);
-  max-height: 62vh;
+  max-width: 100%;
+  max-height: 46vh;
   height: auto;
-  margin: 0.15rem 0 0.4rem;
+  margin: 0;
   background: #ffffff;
+}
+
+.anno {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: min(100%, 56rem);
+  margin: 0.15rem 0 0.45rem;
+}
+
+.anno svg.marks {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
 }
 
 .fig-caption,
