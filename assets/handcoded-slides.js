@@ -724,7 +724,7 @@
   // column j of B meet at C[i, j].
   const KIND_LABEL = { blk0: "block 0", q: "Q", k: "K", s: "scores", a: "softmax", v: "V", o: "A·V",
                        zero: "unused head", add: "add heads", pre: "XWᵀ + b", relu: "ReLU", out: "HWᵀ",
-                       res: "add MLP", read: "logits" };
+                       res: "add MLP", read: "logits", feed: "feed back" };
   const CS = 10, RED = "#b91c1c";
   const SLOT_OF = [];
   for (const [name, size] of SLOT_SIZES) for (let i = 0; i < size; i++) SLOT_OF.push(name);
@@ -764,7 +764,7 @@
       out.push({ b, kind: "add", op: `B${b} add` });
       for (const kind of ["pre", "relu", "out", "res"]) out.push({ b, kind, op: `B${b} MLP` });
     }
-    out.push({ b: L - 1, kind: "read", op: "Readout" });
+    out.push({ b: L - 1, kind: "read", op: "Readout" }, { b: L - 1, kind: "feed", op: "Feedback" });
     return out;
   }
 
@@ -815,6 +815,7 @@
   }
 
   function defRow(prog, st) {
+    if (st.kind === "feed") return prog === "process" ? N + 1 + state.t : N + 3;
     if (st.kind === "read") return prog === "process" ? 2 * N + 3 : N + 3;
     if (st.b === 0) {
       const x = run[prog].trace.blocks[0].x;
@@ -883,6 +884,11 @@
               { M: b0.x, nm: ["X"], r: "T", c: "W" }], ["+", "="]);
         break;
       }
+      case "feed":
+        Object.assign(d, { layout: "feed", mats: [
+          { M: cols(tr.blocks[L - 1].x, range(at("OUT"), at("OUT") + V)), nm: ["OUT"], r: "T", c: "Vv" },
+          { M: cols(tr.x0, range(at("TV"), at("TV") + V)), nm: ["TV"], r: "T", c: "Vv" }] });
+        break;
       case "read":
         Object.assign(d, { A: { M: tr.blocks[L - 1].x, nm: ["X"], r: "T", c: "W" },
                            B: { M: tp(pr.readout), nm: ["R", "⊤"], r: "W", c: "V" },
@@ -893,6 +899,7 @@
     const result = d.layout === "falk" ? d.C.M : d.mats[d.mats.length - 1].M;
     let j;
     if (f) j = f.j;
+    else if (st.kind === "feed") j = argmax(d.mats[0].M[i]);
     else if (st.kind === "a") j = argmax(hd.a[i]);
     else if (st.kind === "pre") j = argmax(result[i]);
     else if (d.layout === "side" && d.mats.length === 3) j = argmaxAbs(d.mats[1].M[i]);
@@ -942,6 +949,7 @@
     if (kind === "P") return `pos ${idx}`;
     if (kind === "F") return `u${map ? map[idx] : idx}`;
     if (kind === "V") return `“${tok(idx)}”`;
+    if (kind === "Vv") return `value ${idx}`;
     return "b";
   }
 
@@ -959,7 +967,7 @@
     }
     const every = n > 24 ? 6 : 1;
     for (let k = 0; k < n; k += every) {
-      const s = kind === "T" ? (top ? String(k) : `${k} ${tok(ids[k])}`) : kind === "V" ? tok(k)
+      const s = kind === "T" ? (top ? String(k) : `${k} ${tok(ids[k])}`) : kind === "V" ? tok(k) : kind === "Vv" ? `value ${k}`
         : kind === "F" ? `u${map ? map[k] : k}` : String(k);
       const t = put(start + (k + 0.5) * CS, s);
       if (kind === "T" && !top && k >= N + 3) t.setAttribute("fill", ORANGE);   // written by the model itself
@@ -1084,8 +1092,43 @@
     return svg;
   }
 
+  // OUT of row i (block 1) → readout → printed token → embedded as TV of row i+1 in the next pass.
+  function feedSvg(d) {
+    const [outM, tvM] = d.mats, r = outM.M.length, w = V * CS, lm = 64, tm = 50, gap = 150;
+    const x1 = lm, x2 = lm + w + gap, svg = newSvg(x2 + w + 70, tm + r * CS + 30, "mx");
+    const rowMs = Math.round(Math.min(90, 1400 / r));
+    animate(svg, r, rowMs);
+    drawMat(svg, outM, x1, tm, { pick: true });
+    drawMat(svg, tvM, x2, tm, { pick: true });
+    axisLabels(svg, outM, "top", x1, tm, d.ids);
+    axisLabels(svg, tvM, "top", x2, tm, d.ids);
+    axisLabels(svg, outM, "left", tm, x1, d.ids);
+    for (let i = 0; i < r; i++) {
+      text(svg, x2 + w + 6, tm + i * CS + 8, i < N + 3 ? "given" : "fed back",
+           { size: 8, fill: i < N + 3 ? "#9ca3af" : ORANGE, weight: i < N + 3 ? 400 : 700 });
+    }
+    svgName(svg, x1 + w / 2, tm + r * CS + 22, ["OUT"], "middle");
+    svgName(svg, x2 + w / 2, tm + r * CS + 22, ["TV"], "middle");
+    text(svg, x1 + w + gap / 2, tm - 30, "printed token", { size: 10, fill: GREEN, anchor: "middle", weight: 700 });
+    for (let i = N + 2; i < r - 1; i++) {
+      if (!isValue(d.ids[i + 1])) continue;
+      const g = node("g", { class: "mx-in" }, svg);
+      g.style.setProperty("--d", (i - N - 2) * 160 + "ms");
+      const ya = tm + (i + 0.5) * CS, yb = tm + (i + 1.5) * CS;
+      curve(g, `M${x1 + w + 3},${ya} C${x1 + w + gap / 2},${ya} ${x1 + w + gap / 2},${yb} ${x2 - 4},${yb}`, GREEN, svg.mk.e, 1.4, false);
+      const lbl = text(g, x1 + w + gap / 2, (ya + yb) / 2 + 3, `“${tok(d.ids[i + 1])}”`, { size: 8, fill: GREEN, anchor: "middle", weight: 700 });
+      lbl.setAttribute("stroke", "#ffffff");
+      lbl.setAttribute("stroke-width", 3);
+      lbl.setAttribute("paint-order", "stroke");
+    }
+    const i = d.i, g = node("g", { class: "mx-late", "pointer-events": "none" }, svg);
+    node("rect", { x: x1, y: tm + i * CS, width: w, height: CS, fill: ORANGE, "fill-opacity": 0.12, stroke: ORANGE, "stroke-width": 1.4 }, g);
+    if (i + 1 < r) node("rect", { x: x2, y: tm + (i + 1) * CS, width: w, height: CS, fill: ORANGE, "fill-opacity": 0.12, stroke: ORANGE, "stroke-width": 1.4 }, g);
+    return svg;
+  }
+
   function mxFig(prog) {
-    const d = mxData(prog), svg = d.layout === "falk" ? falkSvg(d) : sideSvg(d);
+    const d = mxData(prog), svg = d.layout === "falk" ? falkSvg(d) : d.layout === "feed" ? feedSvg(d) : sideSvg(d);
     svg.classList.add(MX[prog].anim ? "mx-anim" : "mx-still");
     svg.addEventListener("click", (e) => {
       const t = e.target, i = t.getAttribute && t.getAttribute("data-i");
@@ -1103,12 +1146,14 @@
   function stageTitle(st) {
     if (st.kind === "read") return "Readout";
     if (st.kind === "blk0") return "Block 0 output";
+    if (st.kind === "feed") return "Readout → next input";
     const part = st.h !== undefined ? `head ${st.h}` : st.kind === "add" ? "attention" : "MLP";
     return `Block ${st.b} · ${part} · ${KIND_LABEL[st.kind]}`;
   }
 
   function formulaHtml(d) {
     const st = d.st;
+    if (d.layout === "feed") return "TV[i+1] = e<sub>v</sub>, where v = token printed by row i<span class=\"mx-shape\">OUT is computed by block 1; TV is the next pass's input</span>";
     if (d.layout === "falk") {
       return `${hn(d.C.nm)} = ${hn(d.A.nm)} · ${hn(d.B.nm)}${d.bias ? " + b" : ""}${d.scale !== 1 ? ` / √${P}` : ""}`
         + `<span class="mx-shape">(${shapeOf(d.A)}) · (${shapeOf(d.B)}) → ${shapeOf(d.C)}</span>`;
@@ -1138,6 +1183,7 @@
       case "out": return `Each surviving unit writes into its output slot. Slots written: ${slotsTouched(d.C.M)}.`;
       case "res": return `The MLP output is added to X. ${st.b === 0 ? "MATCH now holds the marks." : "OUT now holds the value each row prints."}`;
       case "blk0": return "Block 0 has exactly the same weights as in the process program (previous slide): it writes QRY and MATCH. This is the X that enters block 1.";
+      case "feed": return `Where the filled TV slot comes from. Row i's block 1 writes OUT, the readout prints that value, and in the next pass it is embedded as TV of row i+1 (green arrows). These are the model's own outputs, not gold answers: a wrong print would be fed back too. Prompt rows (gray) are given.`;
       case "read": return "R reads OUT (weight 20 per value) and POS for the rows that print ':' and EOS. The largest logit in row i is the token predicted for position i+1 (right; green = correct). Gray rows are the prompt: their predictions are never used.";
     }
     return "";
@@ -1169,6 +1215,14 @@
       return h;
     }
     const st = d.st, rowName = `Row ${i} (${tok(ids[i])})`;
+    if (st.kind === "feed") {
+      const out = d.mats[0].M[i], next = ids[i + 1];
+      if (i < N + 2 || next === undefined || !isValue(next)) {
+        return `<p class="mx-fh">${rowName}</p><p>${i < N + 2 ? "Prompt row: its prediction is not used, and the next row's TV is part of the given prompt." : "This row prints a non-value token (via POS), so nothing goes into the next row's TV."}</p>`;
+      }
+      return `<p class="mx-fh">${rowName}</p><p>OUT = (${Array.from(out, fmtV).join(", ")}) → prints “${tok(next)}”</p>`
+        + `<p>→ next pass: TV of row ${i + 1} = (${Array.from(d.mats[1].M[i + 1], fmtV).join(", ")}) ✓</p>`;
+    }
     if (st.kind === "a") {
       const s = d.mats[0].M[i], a = d.mats[1].M[i], order = range(0, i + 1).sort((x, y) => a[y] - a[x]);
       const top = order.slice(0, 3), rest = order.slice(3);
