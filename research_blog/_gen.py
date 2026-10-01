@@ -304,7 +304,7 @@ slides.append(r'''  <section class="slide">
 slides.append(r'''  <section class="slide">
     <p class="slide-kicker">6 · Block 1, process program</p>
     <h2>One update per emitted state</h2>
-''' + fig(s6, "56rem") + r'''
+''' + fig(s6, "52rem") + r'''
     <div class="math">\[
       u^{0}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - 0.5) \to \mathrm{OUT}_j,
       \;
@@ -319,7 +319,7 @@ slides.append(r'''  <section class="slide">
 slides.append(r'''  <section class="slide">
     <p class="slide-kicker">7 · Block 1, outcome program</p>
     <h2>Read all \(n\) marks at the colon</h2>
-''' + fig(s7, "56rem") + r'''
+''' + fig(s7, "47rem") + r'''
     <div class="math">\[
       x_{\mathrm{CNT}} = n \cdot \tfrac{1}{n}\textstyle\sum_t b_t = c, \quad
       \beta_{c'}(x) = r(x{-}c'{+}1) - 2r(x{-}c') + r(x{-}c'{-}1) = \mathbb{1}[x = c']
