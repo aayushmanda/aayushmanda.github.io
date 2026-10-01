@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hand-Coded Process and Outcome Programs - Aayushman</title>
+    <meta name="description" content="Interactive slides on two exact programs for letter counting written into the same two-block Transformer: tensor shapes, the residual-stream layout, and the weights of each block, computed live in the browser.">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+    <script>
+      try {
+        var t = localStorage.getItem("theme");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css?v=35">
+    <style>
+      .content .slide-table.compact { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0; }
+      .content .slide-table.compact th, .content .slide-table.compact td { padding: 0.28rem 0.6rem; }
+      .slide .math { font-size: clamp(1.05rem, 1.6vw, 1.35rem); }
+      .slide .math.sm { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0.2rem 0; }
+      .slide p, .slide li { margin-top: 0; }
+      .hc-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin: 0 0 0.45rem; font-size: 1rem; }
+      .hc-controls .lbl { margin-left: 0.4rem; color: #4b5563; font-weight: 700; }
+      .hc-controls .lbl:first-child { margin-left: 0; }
+      .hc-val { min-width: 3.4rem; text-align: center; font-weight: 700; color: #1e3a8a; }
+      .hc-btn { padding: 0.12rem 0.6rem; border: 1px solid #bfdbfe; border-radius: 6px; background: #ffffff; color: #1e3a8a; font: inherit; font-size: 0.95rem; cursor: pointer; }
+      .hc-btn:hover { background: #eff6ff; }
+      .hc-btn.on { border-color: #1d4ed8; background: #1d4ed8; color: #ffffff; }
+      .hc-btn.letter { min-width: 2rem; font-family: ui-monospace, Menlo, monospace; }
+      .hc-info { margin: 0.1rem 0 0.4rem; color: #374151; font-size: clamp(0.95rem, 1.3vw, 1.1rem); }
+      .hc-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0.6rem 1.6rem; align-items: start; }
+      .hc-grid.heat { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+      .hc-grid.play { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+      .hc-heat { max-width: 22.5rem; margin: 0; }
+      .hc-heat.wide { max-width: none; }
+      .hc-grid.play .hc-heat { max-width: 34rem; }
+      .hc-grid.net { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+      .hc-grid li { font-size: clamp(1rem, 1.4vw, 1.2rem); }
+      .hc-grid.net .eq-row { flex-wrap: nowrap; font-size: clamp(0.95rem, 1.3vw, 1.15rem); }
+      .eq-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin: 0 0 0.25rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: clamp(1rem, 1.45vw, 1.25rem); }
+      .eq-row .shape { color: #6b7280; font-size: 0.85em; white-space: nowrap; }
+      .slide .eq-row.is-current, .slide li[data-step].is-current, .slide .math[data-step].is-current { background: #f5f9ff; border-radius: 6px; }
+      .hc-slots text { pointer-events: none; }
+      .draw { stroke-dasharray: 1; }
+      .slide [data-step].is-shown .draw { animation: hc-draw 0.8s ease-out both; }
+      @keyframes hc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+      @media (prefers-reduced-motion: reduce) { .slide [data-step].is-shown .draw { animation: none; } }
+      .hc-outputs { margin: 0 0 0.6rem; }
+      .hc-out-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin: 0 0 0.35rem; }
+      .hc-out-name { width: 4.8rem; color: #1d4ed8; font-size: 1rem; font-weight: 700; }
+      .hc-chip { min-width: 1.6rem; padding: 0.05rem 0.35rem; border: 1px solid #c2410c; border-radius: 5px; background: #ffedd5; text-align: center; font-size: 0.95rem; }
+      .hc-chip.val { color: #1d4ed8; }
+      .hc-ok, .hc-bad { margin-left: 0.4rem; font-size: 0.95rem; font-weight: 700; }
+      .hc-ok { color: #15803d; }
+      .hc-bad { color: #b91c1c; }
+      .slide .idea, .slide .gen { margin: 0 0 0.6rem; padding: 0.45rem 0.85rem; border-radius: 0 8px 8px 0; font-size: clamp(1.02rem, 1.5vw, 1.25rem); line-height: 1.45; }
+      .slide .idea { border-left: 4px solid #c2410c; background: #fff7ed; color: #1f2937; }
+      .slide .gen { border-left: 4px solid #1d4ed8; background: #eff6ff; color: #1f2937; }
+      .tag-ex, .tag-gen { display: inline-block; margin-right: 0.45rem; padding: 0 0.4rem; border-radius: 4px; color: #ffffff; font-size: 0.72em; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; vertical-align: 0.12em; }
+      .tag-ex { background: #c2410c; }
+      .tag-gen { background: #1d4ed8; }
+      .slide .hc-sub { color: #4b5563; font-size: clamp(1rem, 1.4vw, 1.2rem); }
+      .slide .tool { margin: 0 0 0.55rem; padding: 0.4rem 0.85rem; border-left: 4px solid #64748b; border-radius: 0 8px 8px 0; background: #f8fafc; }
+      .slide .tool p { margin: 0 0 0.2rem; font-size: clamp(1.02rem, 1.5vw, 1.25rem); }
+      .slide .tool .math { margin: 0.1rem 0; }
+      .content .slide-table.glossary td { text-align: left; }
+      .content .slide-table.glossary td:nth-child(odd) { width: 1%; padding-right: 1.2rem; font-weight: 700; color: #1e3a8a; }
+      .content .slide-table.trace td, .content .slide-table.trace th { text-align: center; }
+      .content .slide-table.trace td:first-child, .content .slide-table.trace th:first-child { text-align: left; }
+      .mx-slide { padding-top: 4vh; }
+      .mx-slide h2 { margin-bottom: 0.35rem; font-size: clamp(1.5rem, 2.6vw, 2.1rem); }
+      .slide > .mx-grid { max-width: 78rem; }
+      .slide > .mx-ctl { max-width: 78rem; margin-bottom: 0.35rem; }
+      .slide > .slide-kicker.mx-k, .mx-slide > .slide-kicker, .mx-slide > h2 { max-width: 78rem; }
+      .mx-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(17rem, 1fr); gap: 0.5rem 1.4rem; align-items: start; }
+      .mx-svg svg { display: block; width: 100%; height: auto; max-height: 64vh; }
+      .mx-svg svg text { pointer-events: none; }
+      .mx-svg svg rect[data-i] { cursor: pointer; }
+      .mx-break { flex-basis: 100%; height: 0; }
+      .mx-ctl .hc-btn { font-size: 0.85rem; padding: 0.08rem 0.45rem; }
+      .slide .mx-stage { margin: 0 0 0.15rem; color: #1e3a8a; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; }
+      .slide .mx-formula { margin: 0 0 0.4rem; font-size: clamp(1.15rem, 1.7vw, 1.45rem); }
+      .mx-shape { display: block; color: #6b7280; font-size: 0.72em; }
+      .slide .mx-why { margin: 0 0 0.5rem; font-size: clamp(0.92rem, 1.25vw, 1.08rem); line-height: 1.42; }
+      .mx-focus { padding: 0.4rem 0.7rem; border-left: 4px solid #c2410c; border-radius: 0 8px 8px 0; background: #fff7ed; }
+      .slide .mx-focus p { margin: 0 0 0.2rem; font-size: 0.92rem; line-height: 1.35; }
+      .slide .mx-focus .mx-fh { font-weight: 700; }
+      .slide .mx-focus .mx-more { color: #6b7280; }
+      .content table.mx-terms { width: auto; margin: 0.1rem 0 0.3rem; border-collapse: collapse; background: transparent; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+      .content table.mx-terms th, .content table.mx-terms td { padding: 0.05rem 0.35rem; border: none; color: #1f2937; text-align: right; font-weight: 400; }
+      .content table.mx-terms th { color: #6b7280; }
+      .content table.mx-terms td:first-child, .content table.mx-terms th:first-child { padding-left: 0; text-align: left; }
+      .slide .mx-hint { margin: 0.4rem 0 0; color: #6b7280; font-size: 0.85rem; }
+      .mx-anim .mx-in { animation: mx-in 0.25s ease-out both; animation-delay: var(--d, 0ms); }
+      .mx-anim .mx-late { animation: mx-in 0.35s ease-out both; animation-delay: calc(var(--dur) + 150ms); }
+      .mx-anim .mx-sweep { animation: mx-sweep var(--dur) steps(var(--rows), end) both, mx-out 0.3s var(--dur) forwards; }
+      .mx-still .mx-sweep { display: none; }
+      @keyframes mx-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes mx-sweep { from { transform: translateY(0); } to { transform: translateY(var(--sweep)); } }
+      @keyframes mx-out { to { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .mx-anim .mx-in, .mx-anim .mx-late { animation: none; } .mx-sweep { display: none; } }
+    </style>
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"], ["$", "$"]],
+          displayMath: [["\\[", "\\]"], ["$$", "$$"]]
+        },
+        options: { skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"] },
+        startup: { typeset: false }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+  <body>
+    <div id="reading-progress" class="reading-progress" aria-hidden="true"></div>
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="/">Home</a>
+      <a href="/papers/">Papers</a>
+      <a href="/teaching/">Academic Activities</a>
+      <a href="/research_blog/" aria-current="page">Research Blog</a>
+      <button class="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
+      </button>
+    </nav>
+
+    <main class="page">
+      <h1 class="page-title tight">Hand-Coded Process and Outcome Programs</h1>
+      <article class="content">
+<div class="deck" data-deck>
+  <div class="deck-bar">
+    <a class="deck-home" href="/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 L12 4 L20 10.5"/><path d="M7 10 V20 H17 V10"/></svg></a>
+    <button type="button" data-prev aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5 L8 12 L15 19"/></svg></button>
+    <button type="button" data-next aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5 L16 12 L9 19"/></svg></button>
+    <span data-count></span>
+  </div>
+
+  <section class="slide slide-title">
+    <p class="slide-kicker">Process vs outcome supervision</p>
+    <h2>Two hand-written programs, one Transformer</h2>
+    <p>Letter counting: we write the exact weights for a <strong>step-by-step</strong> solution and an <strong>all-at-once</strong> solution, in the same small network.</p>
+    <p class="hc-sub">Running example on every slide: \(s_0 = 1,\ q = \mathtt{a},\ \text{word} = \mathtt{b\,a\,d\,a\,c\,a}\). Only basic linear algebra is needed. Every figure is computed live from the weights.</p>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">1 · Task</p>
+    <h2>Count the query letter, mod \(m\)</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(m = 3\): start at \(s_0 = 1\) and add 1 at every <b>a</b> in b a d a c a, wrapping around at 3. The answer is \(s_6 = 1\).</div>
+    <table class="slide-table compact trace">
+      <thead><tr><th>step \(t\)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th></tr></thead>
+      <tbody>
+        <tr><td>letter \(w_t\)</td><td></td><td>b</td><td>a</td><td>d</td><td>a</td><td>c</td><td>a</td></tr>
+        <tr><td>mark: is it a?</td><td></td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+        <tr><td>state \(s_t\)</td><td>1</td><td>1</td><td>2</td><td>2</td><td>0</td><td>0</td><td>1</td></tr>
+      </tbody>
+    </table>
+    <div class="gen" data-step="1"><span class="tag-gen">In general</span> \(s_t = (s_{t-1} + [w_t = q]) \bmod m\), where \([w_t = q]\) is 1 if the letter equals the query and 0 otherwise.</div>
+    <ul>
+      <li data-step="2"><b>Process supervision:</b> the model is trained to write every state \(s_1, \dots, s_6\), then the answer.</li>
+      <li data-step="2"><b>Outcome supervision:</b> the model is trained to write only the answer \(s_6\).</li>
+    </ul>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">2 · The two programs in words</p>
+    <h2>Step by step vs all at once</h2>
+    <div class="fig" style="max-width:48rem" data-hc="fig1"></div>
+    <ul>
+      <li data-step="1"><b>Process</b> (top row): write \(1, 2, 2, 0, 0, 1\). Each new state needs only the previous state and one mark: \(s_4 = (2 + 1) \bmod 3 = 0\).</li>
+      <li data-step="2"><b>Outcome</b> (bottom row): write only the answer. It must count all the marks at once: \(c = 3\), so \((1 + 3) \bmod 3 = 1\).</li>
+      <li data-step="3">Both get the <b>same prompt</b> and the <b>same network</b>. We write the exact weights for each by hand.</li>
+    </ul>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">3 · Toolkit</p>
+    <h2>Three facts from linear algebra</h2>
+    <p class="hc-sub">Every weight in this deck is built from these three facts.</p>
+    <div class="tool" data-step="1">
+      <p><b>1. One-hot vectors.</b> Letter c of a, b, c, d is \(e_{\mathtt c} = (0, 0, 1, 0)\). Dot products test equality: \(e_i \cdot e_j = [i = j]\), i.e. 1 if equal and 0 if not.</p>
+    </div>
+    <div class="tool" data-step="2">
+      <p><b>2. ReLU makes an AND gate.</b> \(\mathrm{ReLU}(x) = \max(0, x)\). For bits \(x, y \in \{0, 1\}\):</p>
+      <div class="math sm">\[ 2\,\mathrm{ReLU}(x + y - 1.5) = \begin{cases} 2 \cdot 0.5 = 1 & x = y = 1 \\ 0 & \text{otherwise (the sum is } \le -0.5) \end{cases} \]</div>
+    </div>
+    <div class="tool" data-step="3">
+      <p><b>3. Softmax with one big score picks one entry.</b> \(\mathrm{softmax}(z)_j = e^{z_j} / \sum_k e^{z_k}\):</p>
+      <div class="math sm">\[ \mathrm{softmax}(16, 0, 0, 0) \approx (0.9999997,\ 10^{-7},\ 10^{-7},\ 10^{-7}), \qquad \mathrm{softmax}(16, 16, 0, 0) \approx (\tfrac12, \tfrac12, 0, 0) \]</div>
+      <p class="hc-sub">One winner gives a lookup of one row. Several tied winners give their average.</p>
+    </div>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">4 · Sizes</p>
+    <h2>Symbols and sizes</h2>
+    <table class="slide-table compact">
+      <thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th><th>Default run</th></tr></thead>
+      <tbody>
+        <tr><td>\(A\)</td><td>number of letters (a, b, c, d)</td><td>4</td><td>4</td></tr>
+        <tr><td>\(n\)</td><td>word length = number of steps</td><td>6</td><td>12</td></tr>
+        <tr><td>\(m\)</td><td>modulus, states are \(0, \dots, m{-}1\)</td><td>3</td><td>2</td></tr>
+        <tr><td>\(q,\ s_0\)</td><td>query letter, start state</td><td>a, 1</td><td>random</td></tr>
+        <tr><td>\(|\mathcal V| = A + m + 3\)</td><td>token types: letters, state values, SEP, :, EOS</td><td>10</td><td>9</td></tr>
+        <tr><td>\(P = 2n + 6\)</td><td>longest row of tokens</td><td>18</td><td>30</td></tr>
+        <tr><td>\(W = 2A + 4m + 2n + 9\)</td><td>length of each token's vector</td><td>41</td><td>49</td></tr>
+        <tr><td>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</td><td>number of ReLU units per MLP</td><td>63</td><td>78</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">5 · The network</p>
+    <h2>A table of vectors, updated twice</h2>
+    <div class="idea"><span class="tag-ex">Example</span> The process row has \(T = 18\) tokens, so the state of the network is an \(18 \times 41\) matrix \(X\). Row \(i\) is the vector for token \(i\).</div>
+    <div class="hc-grid net">
+      <div>
+        <div class="eq-row" data-step="1"><span>\(X = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">start: which token + where</span></div>
+        <div class="eq-row" data-step="2"><span>\(S_h = (X W^{Q\top}_h)(X W^{K\top}_h)^{\top} / \sqrt{P}\)</span><span class="shape">how much row \(i\) wants row \(j\)</span></div>
+        <div class="eq-row" data-step="3"><span>\(X \mathrel{+}= \sum_{h} \mathrm{softmax}(S_h)\, X W^{V\top}_h\)</span><span class="shape">attention: copy from other rows</span></div>
+        <div class="eq-row" data-step="4"><span>\(X \mathrel{+}= \mathrm{ReLU}(X W_{\mathrm{in}}^{\top} + b)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">MLP: same function on each row</span></div>
+        <div class="eq-row" data-step="5"><span>\(\mathrm{logits} = X R^{\top}\)</span><span class="shape">readout: score each next token</span></div>
+        <ul>
+          <li data-step="5">Attention + MLP is one <b>block</b>. There are 2 blocks.</li>
+          <li data-step="5">Each block has 3 <b>heads</b>, i.e. 3 independent copy operations \(h\).</li>
+          <li data-step="5">A row may only read rows at or before it (causal mask).</li>
+        </ul>
+      </div>
+      <div data-step="6">
+        <table class="slide-table compact">
+          <thead><tr><th>Matrix</th><th>Shape</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>\(E_{\mathrm{tok}}, R\)</td><td>\(|\mathcal V| \times W\)</td><td>10 × 41</td></tr>
+            <tr><td>\(E_{\mathrm{pos}}\)</td><td>\(P \times W\)</td><td>18 × 41</td></tr>
+            <tr><td>\(W^Q_h, W^K_h\)</td><td>\(P \times W\)</td><td>18 × 41</td></tr>
+            <tr><td>\(W^V_h\)</td><td>\(W \times W\)</td><td>41 × 41</td></tr>
+            <tr><td>\(W_{\mathrm{in}}, W_{\mathrm{out}}^{\top}\)</td><td>\(F \times W\)</td><td>63 × 41</td></tr>
+            <tr><td>Parameters</td><td></td><td>30,958</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+  <section class="slide">
+    <p class="slide-kicker">6 · Inside each row</p>
+    <h2>Each vector is split into named slots</h2>
+    <div class="idea"><span class="tag-ex">Example</span> The row for the letter <b>a</b> at position 3 starts as \(e_{\mathtt a}\) in TL and \(e_3\) in POS. Block 0 then writes \(e_{\mathtt a}\) into QRY and 1 into MATCH.</div>
+    <div class="fig" style="max-width:42rem" data-hc="slots"></div>
+    <div data-hc="slotinfo"></div>
+    <table class="slide-table compact glossary">
+      <tbody>
+        <tr><td>TL</td><td>the letter, one-hot</td><td>PREV</td><td>previous state \(s_{t-1}\)</td></tr>
+        <tr><td>TV</td><td>a state value, one-hot</td><td>MT</td><td>copy of the mark (process)</td></tr>
+        <tr><td>POS</td><td>the position, one-hot</td><td>CNT</td><td>the count \(c\) (outcome)</td></tr>
+        <tr><td>QRY</td><td>copy of the query \(q\)</td><td>S0</td><td>start state \(s_0\) (outcome)</td></tr>
+        <tr><td>MATCH</td><td>the mark \([w_t = q]\)</td><td>OUT</td><td>the value to print</td></tr>
+      </tbody>
+    </table>
+    <div class="gen" data-step="3"><span class="tag-gen">In general</span> Every slot has a single job. Attention weights are identity blocks that copy one slot into another; the MLPs hold the small AND gates.</div>
+  </section>
+
+  <section class="slide mx-slide">
+    <p class="slide-kicker">7 · Process program, every matrix</p>
+    <h2>Every head and MLP, as matrix products</h2>
+    <div class="hc-controls mx-ctl" data-hc="mxctlp"></div>
+    <div class="mx-grid">
+      <div data-hc="mxfigp" data-mx="process"></div>
+      <div data-hc="mxsidep"></div>
+    </div>
+  </section>
+
+  <section class="slide mx-slide">
+    <p class="slide-kicker">8 · Outcome program, every matrix</p>
+    <h2>Same network, outcome weights</h2>
+    <div class="hc-controls mx-ctl" data-hc="mxctlo"></div>
+    <div class="mx-grid">
+      <div data-hc="mxfigo" data-mx="outcome"></div>
+      <div data-hc="mxsideo"></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">9 · Playground</p>
+    <h2>Run both programs</h2>
+    <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
+    <div class="hc-controls" data-hc="ctl8"></div>
+    <div class="hc-grid play">
+      <div>
+        <div class="hc-controls" data-hc="ctl8b"></div>
+        <div data-hc="fig8"></div>
+      </div>
+      <div>
+        <div data-hc="outputs"></div>
+        <ul>
+          <li>The matrix \(X\): rows = tokens, columns = slots</li>
+          <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">10 · Summary</p>
+    <h2>Same answer, very different programs</h2>
+    <table class="slide-table">
+      <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
+        <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
+        <tr><td>Block-1 ReLU units</td><td>\(2m\) (example: 6)</td><td>\(3m(n{+}1)\) (example: 63)</td></tr>
+        <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
+        <tr><td>Supervised tokens per row</td><td>\(n + 3\)</td><td>3</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li data-step="1">Both programs are exact and live in the same network.</li>
+      <li data-step="2">Process: a small rule applied \(n\) times. Outcome: one large lookup over every possible count.</li>
+      <li data-step="3">Next: train one random starting point under each loss and compare it with these two programs.</li>
+    </ul>
+  </section>
+
+  <section class="slide slide-title">
+    <p class="slide-kicker">Appendix</p>
+    <h2>Each part as a picture</h2>
+    <p class="hc-sub">The same computations as slides 7–8, drawn as token diagrams instead of matrices.</p>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A1 · Attention</p>
+    <h2>Each head looks up one row</h2>
+    <div class="hc-grid heat">
+      <div>
+        <div class="hc-controls" data-hc="heads"></div>
+        <div data-hc="fig4"></div>
+      </div>
+      <div>
+        <div class="idea"><span class="tag-ex">Example</span> Head "Proc h1": row 11 (holding \(s_3 = 2\)) needs the mark of \(w_4\), stored at row 5. The heatmap shows a dark cell at (11, 5).</div>
+        <div class="eq-row" data-step="1"><span>Key of row \(j\): \(k_j = e_j\), its position one-hot</span></div>
+        <div class="eq-row" data-step="2"><span>Query of row 11: \(q_{11} \propto e_5\), the row it wants</span></div>
+        <div class="eq-row" data-step="3"><span>Score \(q_{11} \cdot k_j = 16\) if \(j = 5\), else 0</span></div>
+        <ul>
+          <li data-step="4">By fact 3, softmax puts weight \(\gt 0.99999\) on row 5</li>
+          <li data-step="5">The value matrix copies one slot, e.g. MATCH of row 5 into MT of row 11</li>
+          <li data-step="5">Click the buttons to see the other heads</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A2 · Block 0 (same for both)</p>
+    <h2>Mark each letter: is it \(q\)?</h2>
+    <div class="idea"><span class="tag-ex">Example</span> Every letter copies the query <b>a</b> from row 1, then compares: b a d a c a \(\to\) marks 0 1 0 1 0 1.</div>
+    <div class="fig" style="max-width:46rem" data-hc="fig5"></div>
+    <div class="gen" data-step="3"><span class="tag-gen">In general</span> Attention copies \(e_q\) into QRY; the MLP computes \(\mathrm{MATCH} = e_{w_t} \cdot e_q = [w_t = q]\) using AND gates (fact 2).</div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A3 · Block 0 · inside the MLP</p>
+    <h2>One AND gate per letter</h2>
+    <div class="idea"><span class="tag-ex">Example</span> At \(w_2 = \mathtt a\): gate a sees TL\(_{\mathtt a} = 1\), QRY\(_{\mathtt a} = 1\), so \(2\,\mathrm{ReLU}(1 + 1 - 1.5) = 1\). At \(w_1 = \mathtt b\): gate b sees \(1 + 0\), so 0.</div>
+    <div class="math sm" data-step="1">\[
+      \mathrm{MATCH} \mathrel{+}= \sum_{a \in \{\mathtt{a,b,c,d}\}} 2\,\mathrm{ReLU}\big(\mathrm{TL}_a + \mathrm{QRY}_a - 1.5\big)
+    \]</div>
+    <div class="hc-grid" data-step="2">
+      <table class="slide-table compact">
+        <thead><tr><th>\(\mathrm{TL}_a\)</th><th>\(\mathrm{QRY}_a\)</th><th>inside ReLU</th><th>output</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>1</td><td>\(+0.5\)</td><td>1</td></tr>
+          <tr><td>1</td><td>0</td><td>\(-0.5\)</td><td>0</td></tr>
+          <tr><td>0</td><td>1</td><td>\(-0.5\)</td><td>0</td></tr>
+          <tr><td>0</td><td>0</td><td>\(-1.5\)</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><span class="tag-gen">In general</span> only gate \(a = w_t = q\) can fire</li>
+        <li>Weights: \(W_{\mathrm{in}}\) has 1 on TL\(_a\) and QRY\(_a\), bias \(-1.5\), \(W_{\mathrm{out}} = 2\)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A4 · Process · block 1</p>
+    <h2>Each step: last state + one mark</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(t = 4\): head 0 fetches \(s_3 = 2\), head 1 fetches the mark of \(w_4 = \mathtt a\) (= 1). The MLP outputs \(s_4 = (2 + 1) \bmod 3 = 0\). Step through \(t\) below.</div>
+    <div class="hc-controls" data-hc="ctl6"></div>
+    <div class="fig" style="max-width:48rem" data-hc="fig6"></div>
+    <div class="gen" data-step="4"><span class="tag-gen">In general</span> Two lookups (\(s_{t-1}\) and one mark), then \(2m\) ReLU units compute \(s_t\). The work per step is the same for any word length \(n\).</div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A5 · Process · inside the MLP</p>
+    <h2>Two AND gates per state value</h2>
+    <div class="idea"><span class="tag-ex">Example</span> PREV \(= e_2\), MT \(= 1\). The gate "was 2 <i>and</i> match" gives \(\mathrm{ReLU}(1 + 1 - 1.5) = 0.5\) and writes to OUT\(_0\). Every other gate is 0.</div>
+    <div class="math sm" data-step="1">\[
+      \underbrace{\mathrm{ReLU}(\mathrm{PREV}_j - \mathrm{MT} - 0.5)}_{\text{was } j \text{ and no match}} \to \mathrm{OUT}_j,
+      \qquad
+      \underbrace{\mathrm{ReLU}(\mathrm{PREV}_j + \mathrm{MT} - 1.5)}_{\text{was } j \text{ and match}} \to \mathrm{OUT}_{(j+1) \bmod m}
+    \]</div>
+    <div class="hc-grid" data-step="2">
+      <table class="slide-table compact">
+        <thead><tr><th>\(\mathrm{PREV}_j\)</th><th>MT</th><th>no-match gate</th><th>match gate</th><th>writes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>0</td><td>0.5</td><td>0</td><td>\(\mathrm{OUT}_j\)</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td><td>0.5</td><td>\(\mathrm{OUT}_{j+1}\)</td></tr>
+          <tr><td>0</td><td>0 or 1</td><td>0</td><td>0</td><td>nothing</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><span class="tag-gen">In general</span> exactly one gate fires; \(W_{\mathrm{out}} = 2\) turns 0.5 into 1</li>
+        <li>\(\Rightarrow \mathrm{OUT} = e_{s_t}\), and the readout prints \(s_t\)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A6 · Outcome · block 1</p>
+    <h2>One row reads all \(n\) marks at once</h2>
+    <div class="idea"><span class="tag-ex">Example</span> At ':', head 0 gives all six letters equal weight \(\tfrac16\) (fact 3, tied scores). The average mark is \(\tfrac36\); times 6 gives \(c = 3\). Head 1 fetches \(s_0 = 1\).</div>
+    <div class="hc-controls" data-hc="ctl7"></div>
+    <div class="fig" style="max-width:45rem" data-hc="fig7"></div>
+    <div class="gen" data-step="4"><span class="tag-gen">In general</span> The MLP must turn \((s_0, c)\) into \((s_0 + c) \bmod m\). It keeps one detector for every pair, \(c = 0, \dots, n\): \(3m(n{+}1)\) units, growing with \(n\).</div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A7 · Outcome · inside the MLP</p>
+    <h2>A spike detector for each count</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(c = 3\). Detector \(c' = 3\): \(r(1) - 2r(0) + r(-1) = 1\). Detector \(c' = 2\): \(r(2) - 2r(1) + r(0) = 2 - 2 + 0 = 0\). Here \(r = \mathrm{ReLU}\).</div>
+    <div class="math sm" data-step="1">\[
+      \beta_{c'}(x) = r(x{-}c'{+}1) - 2\,r(x{-}c') + r(x{-}c'{-}1) = \begin{cases} 1 & x = c' \\ 0 & \text{any other whole number } x \end{cases}
+    \]</div>
+    <div class="hc-grid" data-step="2">
+      <table class="slide-table compact">
+        <thead><tr><th>count \(x\)</th><th>\(r(x{-}c'{+}1)\)</th><th>\(r(x{-}c')\)</th><th>\(r(x{-}c'{-}1)\)</th><th>\(\beta_{c'}\)</th></tr></thead>
+        <tbody>
+          <tr><td>below \(c'\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>\(c'\)</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+          <tr><td>\(c'{+}d\), \(d \ge 1\)</td><td>\(d{+}1\)</td><td>\(d\)</td><td>\(d{-}1\)</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li><span class="tag-gen">In general</span> 3 ReLUs make one spike, one spike per \((s_0, c')\)</li>
+        <li>A large negative bias switches off every \(s_0\) group but the true one</li>
+        <li>Spike \((s_0, c)\) writes OUT\(_{(s_0 + c) \bmod m} \Rightarrow\) prints \(s_n\)</li>
+      </ul>
+    </div>
+  </section>
+</div>
+      </article>
+    </main>
+    <script src="/assets/handcoded-slides.js?v=5" defer></script>
+    <script src="/assets/slides.js?v=8" defer></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        if (window.initSlides) window.initSlides(document.querySelector(".content"));
+        var script = document.querySelector('script[src*="mathjax"]');
+        function go() {
+          var mj = window.MathJax;
+          var ready = mj && mj.startup && mj.startup.promise ? mj.startup.promise : Promise.resolve();
+          ready.then(function () { if (window.typesetCurrentSlide) window.typesetCurrentSlide(); });
+        }
+        if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) go();
+        else if (script) script.addEventListener("load", go, { once: true });
+      });
+    </script>
+    <script src="/assets/theme-toggle.js?v=9" defer></script>
+  <script>
+window.addEventListener("load",function(){setTimeout(function(){var k=+(new URLSearchParams(location.search).get("k")||0);
+for(var i=0;i<k;i++)window.dispatchEvent(new KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+window.__err=null;},1500);});
+window.addEventListener("error",function(e){document.title="ERR "+e.message;});
+</script></body>
+</html>
