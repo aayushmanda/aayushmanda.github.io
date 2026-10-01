@@ -961,7 +961,8 @@
     for (let k = 0; k < n; k += every) {
       const s = kind === "T" ? (top ? String(k) : `${k} ${tok(ids[k])}`) : kind === "V" ? tok(k)
         : kind === "F" ? `u${map ? map[k] : k}` : String(k);
-      put(start + (k + 0.5) * CS, s);
+      const t = put(start + (k + 0.5) * CS, s);
+      if (kind === "T" && !top && k >= N + 3) t.setAttribute("fill", ORANGE);   // written by the model itself
     }
   }
 
@@ -1196,7 +1197,9 @@
     for (const [cls, html] of parts) { const p = el("p", cls); p.innerHTML = html; wrap.append(p); }
     const foc = el("div", "mx-focus");
     foc.innerHTML = focusHtml(d);
-    wrap.append(foc, el("p", "mx-hint", "Blue > 0, red < 0, full color at |v| ≥ 1, white below 10⁻⁴. Click any cell to inspect it · ← → step through."));
+    const fed = el("p", "mx-hint");
+    fed.innerHTML = `<b style="color:${ORANGE}">Orange rows</b> (${N + 3}–${d.T - 1}) are tokens the model wrote earlier, fed back in as input. Row i predicts token i+1 and can only read rows ≤ i.`;
+    wrap.append(foc, fed, el("p", "mx-hint", "Blue > 0, red < 0, full color at |v| ≥ 1, white below 10⁻⁴. Click any cell to inspect it · ← → step through."));
     return wrap;
   }
 
@@ -1220,10 +1223,143 @@
     return out;
   }
 
-  // Arrow keys and deck clicks step through the stages before leaving the slide.
-  function activeMx() {
-    const slide = document.querySelector(".slide.is-on"), host = slide && slide.querySelector("[data-mx]");
-    return host ? host.getAttribute("data-mx") : null;
+  // ------------------------------------------------------------------ inference, one token at a time
+  // Starts from the prompt alone and runs one real forward pass per new token.
+  const GEN = { prog: "process", k: 0, anim: true };
+  const GEN_NAMES = ["genctl", "genfig", "geninfo"];
+  let genTimer = null;
+  const genLen = () => run[GEN.prog].ids.length - run.prompt.length;
+
+  function genStop() { if (genTimer) { clearInterval(genTimer); genTimer = null; } }
+
+  function genGo(k) {
+    if (k < 0 || k > genLen()) return false;
+    GEN.k = k;
+    GEN.anim = true;
+    refresh(GEN_NAMES);
+    return true;
+  }
+
+  function genPlay() {
+    if (genTimer) { genStop(); refresh(["genctl"]); return; }
+    if (GEN.k >= genLen()) GEN.k = 0;
+    genTimer = setInterval(() => {
+      const host = document.querySelector('[data-hc="genfig"]');
+      if (!host || !host.closest(".slide.is-on") || !genGo(GEN.k + 1) || GEN.k >= genLen()) genStop();
+      refresh(["genctl"]);
+    }, 1300);
+    refresh(GEN_NAMES);
+  }
+
+  // The pass that writes token L: forward on rows 0..L-1 only, read the last row.
+  function genPass() {
+    const full = run[GEN.prog].ids, L = run.prompt.length + GEN.k;
+    if (GEN.k >= genLen()) return { full, L, done: true };
+    const logits = forward(PARAMS[GEN.prog], full.slice(0, L)).logits[L - 1];
+    const fullRow = run[GEN.prog].trace.logits[L - 1];
+    const diffMax = Math.max(...logits.map((v, i) => Math.abs(v - fullRow[i])));
+    const pred = argmax(logits), runner = Math.max(...logits.filter((_, i) => i !== pred));
+    return { full, L, logits, pred, runner, diffMax, done: false };
+  }
+
+  function genCtl() {
+    const G = genLen(), set = (prog) => { genStop(); GEN.prog = prog; GEN.k = 0; GEN.anim = true; refresh(GEN_NAMES); };
+    return [
+      el("span", "lbl", "Program"),
+      btn("process", GEN.prog === "process", () => set("process")),
+      btn("outcome", GEN.prog === "outcome", () => set("outcome")),
+      el("span", "lbl", "Pass"),
+      btn("◀", false, () => { genStop(); genGo(GEN.k - 1); }),
+      btn("▶", false, () => { genStop(); genGo(GEN.k + 1); }),
+      btn(genTimer ? "Pause" : "Play", !!genTimer, genPlay),
+      btn("Restart", false, () => { genStop(); genGo(0); }),
+      el("span", "hc-val", `${GEN.k} / ${G} tokens written`),
+    ];
+  }
+
+  function genFig() {
+    const g = genPass(), { full, L } = g, np = run.prompt.length, T = full.length;
+    const st = 52, bw = 44, x0 = 18, y = 92, cx = (i) => x0 + i * st + bw / 2;
+    const svg = newSvg(x0 + T * st + 10, g.done ? 190 : 345, "mx");
+    svg.classList.add(GEN.anim ? "mx-anim" : "mx-still");
+    svg.style.setProperty("--dur", "0ms");
+    text(svg, x0, 22, g.done ? `Done: ${T - np} passes wrote every token after the prompt.`
+      : `Pass ${GEN.k + 1}: the network sees only rows 0–${L - 1} (${L} tokens).`, { size: 17, weight: 700, fill: INK });
+    for (let i = 0; i < T; i++) {
+      const x = x0 + i * st;
+      if (i < L) {
+        token(svg, x, y, bw, 42, full[i], i < np ? {} : ORANGE_TOK);
+        text(svg, cx(i), y - 7, String(i), { size: 11, fill: i < np ? GRAY : ORANGE, anchor: "middle" });
+      } else if (i === L && !g.done) {
+        const gg = node("g", { class: "mx-in" }, svg);
+        gg.style.setProperty("--d", "450ms");
+        token(gg, x, y, bw, 42, g.pred, { fill: "#ecfdf5", stroke: GREEN, sw: 2.5 });
+        text(gg, cx(i), y - 7, String(i), { size: 11, fill: GREEN, anchor: "middle", weight: 700 });
+        text(gg, cx(i), y + 60, "new", { size: 12, fill: GREEN, anchor: "middle", weight: 700 });
+      } else {
+        node("rect", { x, y, width: bw, height: 42, rx: 6, fill: "none", stroke: "#cbd5e1", "stroke-width": 1.3,
+                       "stroke-dasharray": "4 3" }, svg);
+        text(svg, cx(i), y + 27, "?", { size: 16, fill: "#cbd5e1", anchor: "middle" });
+      }
+    }
+    bracket(svg, x0, x0 + np * st - 8, y + 50, GRAY, "prompt");
+    if (L > np) bracket(svg, x0 + np * st, x0 + L * st - 8, y + 50, ORANGE, "written by earlier passes");
+    if (!g.done) {
+      if (L + 1 < T) text(svg, x0 + (L + 1) * st, y + 66, "do not exist yet", { size: 12, fill: "#9ca3af" });
+      const arcG = node("g", { class: "mx-in" }, svg);
+      arcG.style.setProperty("--d", "150ms");
+      arc(arcG, cx(L - 1), cx(L), y - 14, 34, GREEN, svg.mk.e, 2.2);
+      // the last row's logits
+      const base = 318, bwid = 34, gx = 70;
+      text(svg, 18, 204, `logits of row ${L - 1} (“${tok(full[L - 1])}”), the only row whose prediction is used:`,
+           { size: 13, fill: GRAY, weight: 700 });
+      for (let v = 0; v < VOCAB; v++) {
+        const l = g.logits[v], h = (Math.max(0, l) / 20) * 80, x = gx + v * (bwid + 22), win = v === g.pred;
+        const bar = box(svg, x, base - Math.max(1.5, h), bwid, Math.max(1.5, h),
+                        { rx: 2, fill: win ? GREEN : "#cbd5e1", stroke: "none" });
+        bar.setAttribute("class", "mx-in");
+        bar.style.setProperty("--d", "150ms");
+        text(svg, x + bwid / 2, base + 16, tok(v), { size: 12, anchor: "middle", weight: win ? 700 : 400, fill: win ? GREEN : INK });
+        text(svg, x + bwid / 2, base - Math.max(1.5, h) - 5, fmtV(l), { size: 11, anchor: "middle", fill: win ? GREEN : GRAY });
+      }
+    }
+    const wrap = el("div", "mx-svg gen-svg");
+    wrap.append(svg);
+    return wrap;
+  }
+
+  function genInfo() {
+    const g = genPass(), wrap = el("div", "gen-info"), np = run.prompt.length;
+    const p = (html) => { const e = el("p"); e.innerHTML = html; wrap.append(e); };
+    if (g.done) {
+      p(`<b>${g.full.length - np} forward passes</b>, each on the tokens written so far, produced exactly the row shown in the matrix walkthrough: `
+        + g.full.slice(np).map((id) => `<span class="hc-chip${isValue(id) ? " val" : ""}">${tok(id)}</span>`).join(" "));
+      p("That is why drawing the whole row at once is fair: no row ever reads a later row, so the numbers are the same.");
+      return wrap;
+    }
+    p(`<b>Pass ${GEN.k + 1}.</b> Input: rows 0–${g.L - 1}. Row ${g.L - 1} predicts “${tok(g.pred)}” (logit ${fmtV(g.logits[g.pred])}, next best ${fmtV(g.runner)}), which is appended as row ${g.L}. ▶ runs the next pass with it.`);
+    p(`Same logits as row ${g.L - 1} of the full-row computation in the walkthrough: largest difference <b>${fmtV(g.diffMax)}</b>.`);
+    return wrap;
+  }
+
+  // Arrow keys and deck clicks step through a slide's own stages before leaving it.
+  function stepperOf(host) {
+    if (host.hasAttribute("data-mx")) {
+      const prog = host.getAttribute("data-mx");
+      return {
+        step: (dir) => mxGo(prog, MX[prog].idx + dir),
+        enter: (dir) => { MX[prog].idx = dir < 0 ? STAGES[prog].length - 1 : 0; MX[prog].focus = null; MX[prog].anim = true; refresh(mxNames(prog)); },
+      };
+    }
+    return {
+      step: (dir) => { genStop(); return genGo(GEN.k + dir); },
+      enter: (dir) => { genStop(); GEN.k = dir < 0 ? genLen() : 0; GEN.anim = true; refresh(GEN_NAMES); },
+    };
+  }
+
+  function activeStepper() {
+    const slide = document.querySelector(".slide.is-on"), host = slide && slide.querySelector("[data-mx], [data-gen]");
+    return host ? stepperOf(host) : null;
   }
 
   function mxWire() {
@@ -1234,8 +1370,8 @@
       const back = e.key === "ArrowLeft" || e.key === "PageUp" || e.key === "Backspace";
       if (!fwd && !back) return;
       mxDir = fwd ? 1 : -1;
-      const prog = activeMx();
-      if (prog && mxGo(prog, MX[prog].idx + mxDir)) { e.preventDefault(); e.stopPropagation(); }
+      const s = activeStepper();
+      if (s && s.step(mxDir)) { e.preventDefault(); e.stopPropagation(); }
     }, true);
     window.addEventListener("click", (e) => {
       const t = e.target;
@@ -1246,20 +1382,15 @@
       const dir = next ? 1 : prev ? -1 : e.clientX > window.innerWidth * 0.72 ? 1 : e.clientX < window.innerWidth * 0.28 ? -1 : 0;
       if (!dir) return;
       mxDir = dir;
-      const prog = activeMx();
-      if (prog && mxGo(prog, MX[prog].idx + dir)) { e.preventDefault(); e.stopPropagation(); }
+      const s = activeStepper();
+      if (s && s.step(dir)) { e.preventDefault(); e.stopPropagation(); }
     }, true);
-    document.querySelectorAll("[data-mx]").forEach((host) => {
-      const slide = host.closest(".slide"), prog = host.getAttribute("data-mx");
+    document.querySelectorAll("[data-mx], [data-gen]").forEach((host) => {
+      const slide = host.closest(".slide"), s = stepperOf(host);
       let was = slide.classList.contains("is-on");
       new MutationObserver(() => {
         const on = slide.classList.contains("is-on");
-        if (on && !was) {
-          MX[prog].idx = mxDir < 0 ? STAGES[prog].length - 1 : 0;
-          MX[prog].focus = null;
-          MX[prog].anim = true;
-          refresh(mxNames(prog));
-        }
+        if (on && !was) s.enter(mxDir);
         was = on;
       }).observe(slide, { attributes: true, attributeFilter: ["class"] });
     });
@@ -1271,6 +1402,7 @@
     ctl6, fig6, ctl7, fig7, ctl8, outputs, ctl8b, fig8,
     mxctlp: () => mxCtl("process"), mxfigp: () => mxFig("process"), mxsidep: () => mxSide("process"),
     mxctlo: () => mxCtl("outcome"), mxfigo: () => mxFig("outcome"), mxsideo: () => mxSide("outcome"),
+    genctl: genCtl, genfig: genFig, geninfo: genInfo,
   };
 
   function refresh(names) {

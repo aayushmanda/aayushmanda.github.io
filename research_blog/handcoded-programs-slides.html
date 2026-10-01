@@ -103,6 +103,9 @@
       @keyframes mx-sweep { from { transform: translateY(0); } to { transform: translateY(var(--sweep)); } }
       @keyframes mx-out { to { opacity: 0; } }
       @media (prefers-reduced-motion: reduce) { .mx-anim .mx-in, .mx-anim .mx-late { animation: none; } .mx-sweep { display: none; } }
+      .gen-svg svg { max-height: 52vh; }
+      .gen-info { margin-top: 0.4rem; }
+      .slide .gen-info p { margin: 0 0 0.35rem; font-size: clamp(1rem, 1.45vw, 1.22rem); }
     </style>
     <script>
       window.MathJax = {
@@ -279,7 +282,15 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">9 · Playground</p>
+    <p class="slide-kicker">9 · Inference</p>
+    <h2>At inference: one token at a time</h2>
+    <div class="hc-controls" data-hc="genctl"></div>
+    <div data-hc="genfig" data-gen></div>
+    <div data-hc="geninfo"></div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">10 · Playground</p>
     <h2>Run both programs</h2>
     <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
     <div class="hc-controls" data-hc="ctl8"></div>
@@ -299,7 +310,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">10 · Summary</p>
+    <p class="slide-kicker">11 · Summary</p>
     <h2>Same answer, very different programs</h2>
     <table class="slide-table">
       <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
@@ -447,7 +458,7 @@
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=5" defer></script>
+    <script src="/assets/handcoded-slides.js?v=7" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
