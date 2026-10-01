@@ -71,6 +71,38 @@
       .content .slide-table.glossary td:nth-child(odd) { width: 1%; padding-right: 1.2rem; font-weight: 700; color: #1e3a8a; }
       .content .slide-table.trace td, .content .slide-table.trace th { text-align: center; }
       .content .slide-table.trace td:first-child, .content .slide-table.trace th:first-child { text-align: left; }
+      .mx-slide { padding-top: 4vh; }
+      .mx-slide h2 { margin-bottom: 0.35rem; font-size: clamp(1.5rem, 2.6vw, 2.1rem); }
+      .slide > .mx-grid { max-width: 78rem; }
+      .slide > .mx-ctl { max-width: 78rem; margin-bottom: 0.35rem; }
+      .slide > .slide-kicker.mx-k, .mx-slide > .slide-kicker, .mx-slide > h2 { max-width: 78rem; }
+      .mx-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(17rem, 1fr); gap: 0.5rem 1.4rem; align-items: start; }
+      .mx-svg svg { display: block; width: 100%; height: auto; max-height: 64vh; }
+      .mx-svg svg text { pointer-events: none; }
+      .mx-svg svg rect[data-i] { cursor: pointer; }
+      .mx-break { flex-basis: 100%; height: 0; }
+      .mx-ctl .hc-btn { font-size: 0.85rem; padding: 0.08rem 0.45rem; }
+      .slide .mx-stage { margin: 0 0 0.15rem; color: #1e3a8a; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; }
+      .slide .mx-formula { margin: 0 0 0.4rem; font-size: clamp(1.15rem, 1.7vw, 1.45rem); }
+      .mx-shape { display: block; color: #6b7280; font-size: 0.72em; }
+      .slide .mx-why { margin: 0 0 0.5rem; font-size: clamp(0.92rem, 1.25vw, 1.08rem); line-height: 1.42; }
+      .mx-focus { padding: 0.4rem 0.7rem; border-left: 4px solid #c2410c; border-radius: 0 8px 8px 0; background: #fff7ed; }
+      .slide .mx-focus p { margin: 0 0 0.2rem; font-size: 0.92rem; line-height: 1.35; }
+      .slide .mx-focus .mx-fh { font-weight: 700; }
+      .slide .mx-focus .mx-more { color: #6b7280; }
+      .content table.mx-terms { width: auto; margin: 0.1rem 0 0.3rem; border-collapse: collapse; background: transparent; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+      .content table.mx-terms th, .content table.mx-terms td { padding: 0.05rem 0.35rem; border: none; color: #1f2937; text-align: right; font-weight: 400; }
+      .content table.mx-terms th { color: #6b7280; }
+      .content table.mx-terms td:first-child, .content table.mx-terms th:first-child { padding-left: 0; text-align: left; }
+      .slide .mx-hint { margin: 0.4rem 0 0; color: #6b7280; font-size: 0.85rem; }
+      .mx-anim .mx-in { animation: mx-in 0.25s ease-out both; animation-delay: var(--d, 0ms); }
+      .mx-anim .mx-late { animation: mx-in 0.35s ease-out both; animation-delay: calc(var(--dur) + 150ms); }
+      .mx-anim .mx-sweep { animation: mx-sweep var(--dur) steps(var(--rows), end) both, mx-out 0.3s var(--dur) forwards; }
+      .mx-still .mx-sweep { display: none; }
+      @keyframes mx-in { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes mx-sweep { from { transform: translateY(0); } to { transform: translateY(var(--sweep)); } }
+      @keyframes mx-out { to { opacity: 0; } }
+      @media (prefers-reduced-motion: reduce) { .mx-anim .mx-in, .mx-anim .mx-late { animation: none; } .mx-sweep { display: none; } }
     </style>
     <script>
       window.MathJax = {
@@ -114,7 +146,6 @@
     <p>Letter counting: we write the exact weights for a <strong>step-by-step</strong> solution and an <strong>all-at-once</strong> solution, in the same small network.</p>
     <p class="hc-sub">Running example on every slide: \(s_0 = 1,\ q = \mathtt{a},\ \text{word} = \mathtt{b\,a\,d\,a\,c\,a}\). Only basic linear algebra is needed. Every figure is computed live from the weights.</p>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">1 · Task</p>
     <h2>Count the query letter, mod \(m\)</h2>
@@ -133,7 +164,6 @@
       <li data-step="2"><b>Outcome supervision:</b> the model is trained to write only the answer \(s_6\).</li>
     </ul>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">2 · The two programs in words</p>
     <h2>Step by step vs all at once</h2>
@@ -144,7 +174,6 @@
       <li data-step="3">Both get the <b>same prompt</b> and the <b>same network</b>. We write the exact weights for each by hand.</li>
     </ul>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">3 · Toolkit</p>
     <h2>Three facts from linear algebra</h2>
@@ -162,7 +191,6 @@
       <p class="hc-sub">One winner gives a lookup of one row. Several tied winners give their average.</p>
     </div>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">4 · Sizes</p>
     <h2>Symbols and sizes</h2>
@@ -180,7 +208,6 @@
       </tbody>
     </table>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">5 · The network</p>
     <h2>A table of vectors, updated twice</h2>
@@ -213,7 +240,6 @@
       </div>
     </div>
   </section>
-
   <section class="slide">
     <p class="slide-kicker">6 · Inside each row</p>
     <h2>Each vector is split into named slots</h2>
@@ -232,8 +258,74 @@
     <div class="gen" data-step="3"><span class="tag-gen">In general</span> Every slot has a single job. Attention weights are identity blocks that copy one slot into another; the MLPs hold the small AND gates.</div>
   </section>
 
+  <section class="slide mx-slide">
+    <p class="slide-kicker">7 · Process program, every matrix</p>
+    <h2>Every head and MLP, as matrix products</h2>
+    <div class="hc-controls mx-ctl" data-hc="mxctlp"></div>
+    <div class="mx-grid">
+      <div data-hc="mxfigp" data-mx="process"></div>
+      <div data-hc="mxsidep"></div>
+    </div>
+  </section>
+
+  <section class="slide mx-slide">
+    <p class="slide-kicker">8 · Outcome program, every matrix</p>
+    <h2>Same network, outcome weights</h2>
+    <div class="hc-controls mx-ctl" data-hc="mxctlo"></div>
+    <div class="mx-grid">
+      <div data-hc="mxfigo" data-mx="outcome"></div>
+      <div data-hc="mxsideo"></div>
+    </div>
+  </section>
+
   <section class="slide">
-    <p class="slide-kicker">7 · Attention</p>
+    <p class="slide-kicker">9 · Playground</p>
+    <h2>Run both programs</h2>
+    <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
+    <div class="hc-controls" data-hc="ctl8"></div>
+    <div class="hc-grid play">
+      <div>
+        <div class="hc-controls" data-hc="ctl8b"></div>
+        <div data-hc="fig8"></div>
+      </div>
+      <div>
+        <div data-hc="outputs"></div>
+        <ul>
+          <li>The matrix \(X\): rows = tokens, columns = slots</li>
+          <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">10 · Summary</p>
+    <h2>Same answer, very different programs</h2>
+    <table class="slide-table">
+      <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
+        <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
+        <tr><td>Block-1 ReLU units</td><td>\(2m\) (example: 6)</td><td>\(3m(n{+}1)\) (example: 63)</td></tr>
+        <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
+        <tr><td>Supervised tokens per row</td><td>\(n + 3\)</td><td>3</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li data-step="1">Both programs are exact and live in the same network.</li>
+      <li data-step="2">Process: a small rule applied \(n\) times. Outcome: one large lookup over every possible count.</li>
+      <li data-step="3">Next: train one random starting point under each loss and compare it with these two programs.</li>
+    </ul>
+  </section>
+
+  <section class="slide slide-title">
+    <p class="slide-kicker">Appendix</p>
+    <h2>Each part as a picture</h2>
+    <p class="hc-sub">The same computations as slides 7–8, drawn as token diagrams instead of matrices.</p>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">A1 · Attention</p>
     <h2>Each head looks up one row</h2>
     <div class="hc-grid heat">
       <div>
@@ -255,7 +347,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">8 · Block 0 (same for both)</p>
+    <p class="slide-kicker">A2 · Block 0 (same for both)</p>
     <h2>Mark each letter: is it \(q\)?</h2>
     <div class="idea"><span class="tag-ex">Example</span> Every letter copies the query <b>a</b> from row 1, then compares: b a d a c a \(\to\) marks 0 1 0 1 0 1.</div>
     <div class="fig" style="max-width:46rem" data-hc="fig5"></div>
@@ -263,7 +355,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">9 · Block 0 · inside the MLP</p>
+    <p class="slide-kicker">A3 · Block 0 · inside the MLP</p>
     <h2>One AND gate per letter</h2>
     <div class="idea"><span class="tag-ex">Example</span> At \(w_2 = \mathtt a\): gate a sees TL\(_{\mathtt a} = 1\), QRY\(_{\mathtt a} = 1\), so \(2\,\mathrm{ReLU}(1 + 1 - 1.5) = 1\). At \(w_1 = \mathtt b\): gate b sees \(1 + 0\), so 0.</div>
     <div class="math sm" data-step="1">\[
@@ -287,7 +379,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">10 · Process · block 1</p>
+    <p class="slide-kicker">A4 · Process · block 1</p>
     <h2>Each step: last state + one mark</h2>
     <div class="idea"><span class="tag-ex">Example</span> \(t = 4\): head 0 fetches \(s_3 = 2\), head 1 fetches the mark of \(w_4 = \mathtt a\) (= 1). The MLP outputs \(s_4 = (2 + 1) \bmod 3 = 0\). Step through \(t\) below.</div>
     <div class="hc-controls" data-hc="ctl6"></div>
@@ -296,7 +388,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">11 · Process · inside the MLP</p>
+    <p class="slide-kicker">A5 · Process · inside the MLP</p>
     <h2>Two AND gates per state value</h2>
     <div class="idea"><span class="tag-ex">Example</span> PREV \(= e_2\), MT \(= 1\). The gate "was 2 <i>and</i> match" gives \(\mathrm{ReLU}(1 + 1 - 1.5) = 0.5\) and writes to OUT\(_0\). Every other gate is 0.</div>
     <div class="math sm" data-step="1">\[
@@ -321,7 +413,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">12 · Outcome · block 1</p>
+    <p class="slide-kicker">A6 · Outcome · block 1</p>
     <h2>One row reads all \(n\) marks at once</h2>
     <div class="idea"><span class="tag-ex">Example</span> At ':', head 0 gives all six letters equal weight \(\tfrac16\) (fact 3, tied scores). The average mark is \(\tfrac36\); times 6 gives \(c = 3\). Head 1 fetches \(s_0 = 1\).</div>
     <div class="hc-controls" data-hc="ctl7"></div>
@@ -330,7 +422,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">13 · Outcome · inside the MLP</p>
+    <p class="slide-kicker">A7 · Outcome · inside the MLP</p>
     <h2>A spike detector for each count</h2>
     <div class="idea"><span class="tag-ex">Example</span> \(c = 3\). Detector \(c' = 3\): \(r(1) - 2r(0) + r(-1) = 1\). Detector \(c' = 2\): \(r(2) - 2r(1) + r(0) = 2 - 2 + 0 = 0\). Here \(r = \mathrm{ReLU}\).</div>
     <div class="math sm" data-step="1">\[
@@ -352,50 +444,10 @@
       </ul>
     </div>
   </section>
-
-  <section class="slide">
-    <p class="slide-kicker">14 · Playground</p>
-    <h2>Run both programs</h2>
-    <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
-    <div class="hc-controls" data-hc="ctl8"></div>
-    <div class="hc-grid play">
-      <div>
-        <div class="hc-controls" data-hc="ctl8b"></div>
-        <div data-hc="fig8"></div>
-      </div>
-      <div>
-        <div data-hc="outputs"></div>
-        <ul>
-          <li>The matrix \(X\): rows = tokens, columns = slots</li>
-          <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="slide">
-    <p class="slide-kicker">15 · Summary</p>
-    <h2>Same answer, very different programs</h2>
-    <table class="slide-table">
-      <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
-      <tbody>
-        <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
-        <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
-        <tr><td>Block-1 ReLU units</td><td>\(2m\) (example: 6)</td><td>\(3m(n{+}1)\) (example: 63)</td></tr>
-        <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
-        <tr><td>Supervised tokens per row</td><td>\(n + 3\)</td><td>3</td></tr>
-      </tbody>
-    </table>
-    <ul>
-      <li data-step="1">Both programs are exact and live in the same network.</li>
-      <li data-step="2">Process: a small rule applied \(n\) times. Outcome: one large lookup over every possible count.</li>
-      <li data-step="3">Next: train one random starting point under each loss and compare it with these two programs.</li>
-    </ul>
-  </section>
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=4" defer></script>
+    <script src="/assets/handcoded-slides.js?v=5" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
