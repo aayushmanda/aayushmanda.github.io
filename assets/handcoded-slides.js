@@ -769,7 +769,29 @@
   }
 
   const STAGES = { process: mxStages("process"), outcome: mxStages("outcome") };
-  const MX = { process: { idx: 0, focus: null, anim: true }, outcome: { idx: 0, focus: null, anim: true } };
+  const MX = { process: { idx: 0, pass: 1, focus: null, anim: true }, outcome: { idx: 0, pass: 1, focus: null, anim: true } };
+
+  // Pass p of free-running generation: the network sees only rows 0..len-1 (prompt + tokens it printed
+  // in passes 1..p-1) and prints token len. Everything on the walkthrough is computed on that prefix.
+  const passCache = {};
+  // The matrix tour shows one pass for both programs: input rows 0..TOUR_ROW-1, output row TOUR_ROW.
+  const TOUR_ROW = N + 4;
+  // What each pass does: the process states are computed one per pass; the tail only copies.
+  function passRole(prog, p) {
+    if (prog === "outcome") return p === 1 ? ["“:”", "prints ':' (position rule)"]
+      : p === 2 ? [`s${sub(N)}`, `computes s${sub(N)} all at once from the ${N} marks`] : ["EOS", "prints EOS (position rule)"];
+    if (p <= N) return [`s${sub(p)}`, `computes s${sub(p)} = (s${sub(p - 1)} + mark of w${sub(p)}) mod ${M}`];
+    if (p === N + 1) return ["“:”", "prints ':' (position rule)"];
+    if (p === N + 2) return ["copy", `only copies s${sub(N)}, printed in pass ${N} (head 2)`];
+    return ["EOS", "prints EOS (position rule)"];
+  }
+  function passTrace(prog) {
+    const full = run[prog].ids, np = run.prompt.length, G = full.length - np;
+    const len = TOUR_ROW, p = len - np + 1, ids = full.slice(0, len);
+    const key = prog + "|" + ids.join(",");
+    if (!passCache[key]) passCache[key] = forward(PARAMS[prog], ids);
+    return { tr: passCache[key], ids, full, len, p, G };
+  }
   const mxNames = (prog) => ["ctl", "fig", "side"].map((k) => `mx${k}${prog[0]}`);
   let mxDir = 1;
 
@@ -814,24 +836,22 @@
     return names.join(", ") || "none";
   }
 
+  // Block 0: the first matching letter. Everything later: the last row, whose prediction is printed.
   function defRow(prog, st) {
-    if (st.kind === "feed") return prog === "process" ? N + 1 + state.t : N + 3;
-    if (st.kind === "read") return prog === "process" ? 2 * N + 3 : N + 3;
-    if (st.b === 0) {
-      const x = run[prog].trace.blocks[0].x;
-      const r = range(2, N + 2).find((i) => x[i][at("MATCH")] > 0.5);
+    const { tr, len } = passTrace(prog);
+    if (st.b === 0 && st.kind !== "read" && st.kind !== "feed") {
+      const r = range(2, N + 2).find((i) => tr.blocks[0].x[i][at("MATCH")] > 0.5);
       return r === undefined ? 2 : r;
     }
-    if (prog === "outcome") return N + 3;
-    return st.h === 2 ? 2 * N + 3 : N + 1 + state.t;
+    return len - 1;
   }
 
   function mxData(prog) {
-    const st = STAGES[prog][MX[prog].idx], tr = run[prog].trace, ids = run[prog].ids, T = ids.length;
+    const st = STAGES[prog][MX[prog].idx], pt = passTrace(prog), { tr, ids } = pt, T = ids.length;
     const pr = PARAMS[prog], blk = pr.blocks[st.b], bt = tr.blocks[st.b];
     const hd = st.h === undefined ? null : bt.heads[st.h], units = usedUnits(blk);
     const X = { M: bt.xIn, nm: ["X"], r: "T", c: "W" };
-    const d = { st, ids, T, layout: "falk", scale: 1, units };
+    const d = { st, ids, T, layout: "falk", scale: 1, units, full: pt.full, pass: pt.p, passes: pt.G };
     const side = (mats, ops) => Object.assign(d, { layout: "side", mats, ops });
     switch (st.kind) {
       case "q": case "k": {
@@ -884,11 +904,15 @@
               { M: b0.x, nm: ["X"], r: "T", c: "W" }], ["+", "="]);
         break;
       }
-      case "feed":
-        Object.assign(d, { layout: "feed", mats: [
+      case "feed": {
+        // TV of the next pass's input: the prefix plus the token printed in this pass.
+        const nextIds = pt.full.slice(0, T + 1);
+        const tv = nextIds.map((id, t) => Float64Array.from(range(at("TV"), at("TV") + V), (w) => pr.wte[id][w] + pr.wpe[t][w]));
+        Object.assign(d, { layout: "feed", nextIds, mats: [
           { M: cols(tr.blocks[L - 1].x, range(at("OUT"), at("OUT") + V)), nm: ["OUT"], r: "T", c: "Vv" },
-          { M: cols(tr.x0, range(at("TV"), at("TV") + V)), nm: ["TV"], r: "T", c: "Vv" }] });
+          { M: tv, nm: ["TV"], r: "T", c: "Vv" }] });
         break;
+      }
       case "read":
         Object.assign(d, { A: { M: tr.blocks[L - 1].x, nm: ["X"], r: "T", c: "W" },
                            B: { M: tp(pr.readout), nm: ["R", "⊤"], r: "W", c: "V" },
@@ -1015,7 +1039,7 @@
     }
     if (d.pred) {
       for (let rr = 0; rr < r; rr++) {
-        const p = argmax(Cm.M[rr]), next = d.ids[rr + 1], used = rr >= N + 2 && next !== undefined;
+        const p = argmax(Cm.M[rr]), next = d.full[rr + 1], used = rr >= N + 2 && next !== undefined;
         const t = text(svg, Cx + c * CS + 6, Cy + rr * CS + 8, "→ " + tok(p),
                        { size: 8, weight: used ? 700 : 400, fill: !used ? "#9ca3af" : p === next ? GREEN : RED });
         t.setAttribute("class", "mx-in");
@@ -1094,29 +1118,32 @@
 
   // OUT of row i (block 1) → readout → printed token → embedded as TV of row i+1 in the next pass.
   function feedSvg(d) {
-    const [outM, tvM] = d.mats, r = outM.M.length, w = V * CS, lm = 64, tm = 50, gap = 150;
-    const x1 = lm, x2 = lm + w + gap, svg = newSvg(x2 + w + 70, tm + r * CS + 30, "mx");
-    const rowMs = Math.round(Math.min(90, 1400 / r));
+    const [outM, tvM] = d.mats, rOut = outM.M.length, r = tvM.M.length, w = V * CS, lm = 64, tm = 50, gap = 150;
+    const x1 = lm, x2 = lm + w + gap, svg = newSvg(x2 + w + 110, tm + r * CS + 30, "mx");
+    const ids = d.nextIds, rowMs = Math.round(Math.min(90, 1400 / r));
     animate(svg, r, rowMs);
     drawMat(svg, outM, x1, tm, { pick: true });
     drawMat(svg, tvM, x2, tm, { pick: true });
-    axisLabels(svg, outM, "top", x1, tm, d.ids);
-    axisLabels(svg, tvM, "top", x2, tm, d.ids);
-    axisLabels(svg, outM, "left", tm, x1, d.ids);
+    axisLabels(svg, outM, "top", x1, tm, ids);
+    axisLabels(svg, tvM, "top", x2, tm, ids);
+    axisLabels(svg, tvM, "left", tm, x1, ids);
     for (let i = 0; i < r; i++) {
-      text(svg, x2 + w + 6, tm + i * CS + 8, i < N + 3 ? "given" : "fed back",
-           { size: 8, fill: i < N + 3 ? "#9ca3af" : ORANGE, weight: i < N + 3 ? 400 : 700 });
+      const isNew = i === rOut, label = i < N + 3 ? "given" : isNew ? "new: printed this pass" : "printed earlier";
+      text(svg, x2 + w + 6, tm + i * CS + 8, label,
+           { size: 8, fill: i < N + 3 ? "#9ca3af" : isNew ? GREEN : ORANGE, weight: i < N + 3 ? 400 : 700 });
     }
     svgName(svg, x1 + w / 2, tm + r * CS + 22, ["OUT"], "middle");
     svgName(svg, x2 + w / 2, tm + r * CS + 22, ["TV"], "middle");
     text(svg, x1 + w + gap / 2, tm - 30, "printed token", { size: 10, fill: GREEN, anchor: "middle", weight: 700 });
-    for (let i = N + 2; i < r - 1; i++) {
-      if (!isValue(d.ids[i + 1])) continue;
-      const g = node("g", { class: "mx-in" }, svg);
-      g.style.setProperty("--d", (i - N - 2) * 160 + "ms");
+    for (let i = N + 2; i < rOut; i++) {
+      if (i + 1 >= r || !isValue(ids[i + 1])) continue;
+      const isNew = i === rOut - 1, g = node("g", { class: "mx-in" }, svg);
+      g.style.setProperty("--d", (isNew ? 600 : 0) + "ms");
       const ya = tm + (i + 0.5) * CS, yb = tm + (i + 1.5) * CS;
-      curve(g, `M${x1 + w + 3},${ya} C${x1 + w + gap / 2},${ya} ${x1 + w + gap / 2},${yb} ${x2 - 4},${yb}`, GREEN, svg.mk.e, 1.4, false);
-      const lbl = text(g, x1 + w + gap / 2, (ya + yb) / 2 + 3, `“${tok(d.ids[i + 1])}”`, { size: 8, fill: GREEN, anchor: "middle", weight: 700 });
+      curve(g, `M${x1 + w + 3},${ya} C${x1 + w + gap / 2},${ya} ${x1 + w + gap / 2},${yb} ${x2 - 4},${yb}`,
+            isNew ? GREEN : "#86efac", svg.mk.e, isNew ? 2.2 : 1.2, false);
+      const lbl = text(g, x1 + w + gap / 2, (ya + yb) / 2 + 3, `“${tok(ids[i + 1])}”`,
+                       { size: 8, fill: isNew ? GREEN : "#4ade80", anchor: "middle", weight: 700 });
       lbl.setAttribute("stroke", "#ffffff");
       lbl.setAttribute("stroke-width", 3);
       lbl.setAttribute("paint-order", "stroke");
@@ -1143,7 +1170,12 @@
   }
 
   // ---- side panel
-  function stageTitle(st) {
+  function stageTitle(st, d) {
+    const pre = d ? `Producing row ${d.T} · ` : "";
+    return pre + stageTitle0(st);
+  }
+
+  function stageTitle0(st) {
     if (st.kind === "read") return "Readout";
     if (st.kind === "blk0") return "Block 0 output";
     if (st.kind === "feed") return "Readout → next input";
@@ -1183,8 +1215,10 @@
       case "out": return `Each surviving unit writes into its output slot. Slots written: ${slotsTouched(d.C.M)}.`;
       case "res": return `The MLP output is added to X. ${st.b === 0 ? "MATCH now holds the marks." : "OUT now holds the value each row prints."}`;
       case "blk0": return "Block 0 has exactly the same weights as in the process program (previous slide): it writes QRY and MATCH. This is the X that enters block 1.";
-      case "feed": return `Where the filled TV slot comes from. Row i's block 1 writes OUT, the readout prints that value, and in the next pass it is embedded as TV of row i+1 (green arrows). These are the model's own outputs, not gold answers: a wrong print would be fed back too. Prompt rows (gray) are given.`;
-      case "read": return "R reads OUT (weight 20 per value) and POS for the rows that print ':' and EOS. The largest logit in row i is the token predicted for position i+1 (right; green = correct). Gray rows are the prompt: their predictions are never used.";
+      case "feed": return d.T + 1 > d.full.length
+        ? "Last pass: EOS was printed, so generation stops."
+        : `Row ${d.T - 1}'s block 1 wrote OUT, the readout printed “${tok(d.full[d.T])}”, and that token becomes row ${d.T} of the next pass, with its value in TV (bold green arrow). Pale arrows: tokens printed in earlier passes. These are the model's own prints, not gold answers. Next pass ▶ adds that row.`;
+      case "read": return `R reads OUT (weight 20 per value) and POS for the rows that print ':' and EOS. Only the last row (${d.T - 1}) matters in this pass: its largest logit is the token printed now, “${tok(argmax(d.C.M[d.T - 1]))}”. Earlier rows repeat what earlier passes printed; gray rows are the prompt.`;
     }
     return "";
   }
@@ -1208,7 +1242,7 @@
       if (d.scale !== 1) h += `<p class="mx-more">sum ${fmtV(v / d.scale)}, then ÷ √${P} = ${fmtV(v)}</p>`;
       if (d.bias) h += `<p class="mx-more">sum ${fmtV(v - d.bias[j])}, then + b = ${fmtV(d.bias[j])} → ${fmtV(v)}</p>`;
       if (d.pred) {
-        const p = argmax(d.C.M[i]), next = ids[i + 1];
+        const p = argmax(d.C.M[i]), next = d.full[i + 1];
         h += `<p>Row ${i} predicts “${tok(p)}”` + (i >= N + 2 && next !== undefined
           ? (p === next ? " ✓ the next token" : ` ✗ (next is “${tok(next)}”)`) : " (prompt row, not used)") + "</p>";
       }
@@ -1216,7 +1250,7 @@
     }
     const st = d.st, rowName = `Row ${i} (${tok(ids[i])})`;
     if (st.kind === "feed") {
-      const out = d.mats[0].M[i], next = ids[i + 1];
+      const out = d.mats[0].M[i], next = d.nextIds[i + 1];
       if (i < N + 2 || next === undefined || !isValue(next)) {
         return `<p class="mx-fh">${rowName}</p><p>${i < N + 2 ? "Prompt row: its prediction is not used, and the next row's TV is part of the given prompt." : "This row prints a non-value token (via POS), so nothing goes into the next row's TV."}</p>`;
       }
@@ -1247,12 +1281,12 @@
 
   function mxSide(prog) {
     const d = mxData(prog), wrap = el("div", "mx-side-in");
-    const parts = [["mx-stage", stageTitle(d.st)], ["mx-formula", formulaHtml(d)], ["mx-why", whyHtml(prog, d)]];
+    const parts = [["mx-stage", stageTitle(d.st, d)], ["mx-formula", formulaHtml(d)], ["mx-why", whyHtml(prog, d)]];
     for (const [cls, html] of parts) { const p = el("p", cls); p.innerHTML = html; wrap.append(p); }
     const foc = el("div", "mx-focus");
     foc.innerHTML = focusHtml(d);
     const fed = el("p", "mx-hint");
-    fed.innerHTML = `<b style="color:${ORANGE}">Orange rows</b> (${N + 3}–${d.T - 1}) are tokens the model wrote earlier, fed back in as input. Row i predicts token i+1 and can only read rows ≤ i.`;
+    fed.innerHTML = `Only rows 0–${d.T - 1} exist. Rows 0–${N + 2} are the given prompt; <b style="color:${ORANGE}">row ${N + 3}</b> (“${tok(d.ids[N + 3])}”) was printed by this same hand-coded model in the pass before. Row ${d.T - 1} makes the prediction for row ${d.T}.`;
     wrap.append(foc, fed, el("p", "mx-hint", "Blue > 0, red < 0, full color at |v| ≥ 1, white below 10⁻⁴. Click any cell to inspect it · ← → step through."));
     return wrap;
   }
@@ -1274,6 +1308,9 @@
     list.forEach((s, n) => { if (s.op === cur.op) out.push(btn(KIND_LABEL[s.kind], n === idx, () => mxGo(prog, n))); });
     out.push(btn("◀", false, () => mxGo(prog, idx - 1)), btn("▶", false, () => mxGo(prog, idx + 1)),
              btn("Replay", false, () => mxGo(prog, idx, true)), el("span", "hc-val", `${idx + 1} / ${list.length}`));
+    const pt = passTrace(prog);
+    out.push(el("span", "mx-break"), el("span", "hc-val mx-passinfo",
+      `Input: rows 0–${pt.len - 1} only. Output: row ${pt.len} = “${tok(pt.full[pt.len])}” (${passRole(prog, pt.p)[1]}).`));
     return out;
   }
 
@@ -1402,7 +1439,10 @@
       const prog = host.getAttribute("data-mx");
       return {
         step: (dir) => mxGo(prog, MX[prog].idx + dir),
-        enter: (dir) => { MX[prog].idx = dir < 0 ? STAGES[prog].length - 1 : 0; MX[prog].focus = null; MX[prog].anim = true; refresh(mxNames(prog)); },
+        enter: (dir) => {
+          if (dir > 0) MX[prog].pass = 1;
+          MX[prog].idx = dir < 0 ? STAGES[prog].length - 1 : 0; MX[prog].focus = null; MX[prog].anim = true; refresh(mxNames(prog));
+        },
       };
     }
     return {
@@ -1450,10 +1490,84 @@
     });
   }
 
+  // ------------------------------------------------------------------ who writes each slot
+  // The residual stream after each sub-layer; cells that the sub-layer changed are outlined.
+  const FILL = { prog: "process", stage: 0 };
+  const FILL_STAGES = [
+    ["Input", "Input (token + position embeddings)", (tr) => tr.x0, null],
+    ["Block 0 attn", "Block 0 · attention", (tr) => tr.blocks[0].xAttn, (tr) => tr.x0],
+    ["Block 0 MLP", "Block 0 · MLP", (tr) => tr.blocks[0].x, (tr) => tr.blocks[0].xAttn],
+    ["Block 1 attn", "Block 1 · attention", (tr) => tr.blocks[1].xAttn, (tr) => tr.blocks[0].x],
+    ["Block 1 MLP", "Block 1 · MLP", (tr) => tr.blocks[1].x, (tr) => tr.blocks[1].xAttn],
+  ];
+
+  function rowRanges(rows) {
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+      let j = i;
+      while (j + 1 < rows.length && rows[j + 1] === rows[j] + 1) j++;
+      out.push(j > i ? `${rows[i]}–${rows[j]}` : String(rows[i]));
+      i = j;
+    }
+    return out.join(", ");
+  }
+
+  function fillCtl() {
+    const set = (k, v) => { FILL[k] = v; refresh(["fillctl", "fillfig"]); };
+    return [
+      btn("process", FILL.prog === "process", () => set("prog", "process")),
+      btn("outcome", FILL.prog === "outcome", () => set("prog", "outcome")),
+      el("span", "lbl", "after"),
+      ...FILL_STAGES.map(([label], k) => btn(label, FILL.stage === k, () => set("stage", k))),
+      btn("▶", false, () => set("stage", (FILL.stage + 1) % FILL_STAGES.length)),
+    ];
+  }
+
+  function fillFig() {
+    const [, name, cur, prev] = FILL_STAGES[FILL.stage], tr = run[FILL.prog].trace, ids = run[FILL.prog].ids;
+    const X = cur(tr), Y = prev ? prev(tr) : null, T = ids.length;
+    const cw = 13, ch = 13, ml = 46, mt = 30, hits = {};
+    const svg = newSvg(ml + W * cw + 4, mt + T * ch + 4);
+    const isNew = (i, w) => Math.abs(X[i][w] - (Y ? Y[i][w] : 0)) > 1e-3;
+    for (let i = 0; i < T; i++) {
+      text(svg, ml - 4, mt + i * ch + 10, `${i} ${tok(ids[i])}`, { size: 9, fill: GRAY, anchor: "end" });
+      for (let w = 0; w < W; w++) {
+        const v = X[i][w];
+        const fill = Math.abs(v) < 1e-6 ? "#ffffff" : v > 0 ? mix(BLUE, Math.min(1, v)) : mix(RED, Math.min(1, -v));
+        const rect = box(svg, ml + w * cw, mt + i * ch, cw, ch, { rx: 0, fill, stroke: "#eef2f7", sw: 0.5 });
+        node("title", {}, rect, `row ${i} (${tok(ids[i])}), ${slotLab(w)} = ${v.toFixed(3)}`);
+        if (isNew(i, w)) (hits[SLOT_OF[w]] = hits[SLOT_OF[w]] || new Set()).add(i);
+      }
+    }
+    for (let i = 0; i < T; i++) {
+      for (let w = 0; w < W; w++) {
+        if (isNew(i, w)) box(svg, ml + w * cw + 0.8, mt + i * ch + 0.8, cw - 1.6, ch - 1.6, { rx: 1, fill: "none", stroke: ORANGE, sw: 1.6 });
+      }
+    }
+    // Free-running generation stops after printing EOS, so no pass ever computes the EOS row.
+    node("rect", { x: ml, y: mt + (T - 1) * ch, width: W * cw, height: ch, fill: "#ffffff", opacity: 0.7 }, svg);
+    for (const [slot, size] of SLOT_SIZES) {
+      const x = ml + SLOT[slot].start * cw, hit = !!hits[slot];
+      text(svg, x + (size * cw) / 2, mt - 8, size >= 3 ? slot : slot[0],
+           { size: 10, fill: hit ? ORANGE : GRAY, anchor: "middle", weight: hit ? 700 : 400 });
+      node("title", {}, svg.lastChild, slot);
+      node("line", { x1: x, y1: mt - 3, x2: x, y2: mt + T * ch, stroke: "#64748b", "stroke-width": 0.8 }, svg);
+    }
+    const fig = el("div", "fig hc-heat wide");
+    fig.append(svg);
+    const written = SLOT_SIZES.map(([slot]) => slot).filter((slot) => hits[slot]).map((slot) => {
+      const rows = [...hits[slot]].sort((a, b) => a - b);
+      return `${slot}: ${rows.length === T ? "all rows" : "rows " + rowRanges(rows)}`;
+    });
+    const info = el("p", "hc-info");
+    info.append(el("b", "", `${name} writes `), written.length ? written.join(" · ") : "nothing new");
+    return [fig, info];
+  }
+
   // ------------------------------------------------------------------ wiring
   const RENDER = {
     fig1, slots: figSlots, slotinfo: slotInfo, heads: headControls, fig4, fig5,
-    ctl6, fig6, ctl7, fig7, ctl8, outputs, ctl8b, fig8,
+    ctl6, fig6, ctl7, fig7, ctl8, outputs, ctl8b, fig8, fillctl: fillCtl, fillfig: fillFig,
     mxctlp: () => mxCtl("process"), mxfigp: () => mxFig("process"), mxsidep: () => mxSide("process"),
     mxctlo: () => mxCtl("outcome"), mxfigo: () => mxFig("outcome"), mxsideo: () => mxSide("outcome"),
     genctl: genCtl, genfig: genFig, geninfo: genInfo,

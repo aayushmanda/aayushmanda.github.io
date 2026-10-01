@@ -39,6 +39,9 @@
       .hc-heat.wide { max-width: none; }
       .hc-grid.play .hc-heat { max-width: 34rem; }
       .hc-grid.net { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+      .hc-grid.fill { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+      .hc-grid.fill .hc-heat { max-width: 36rem; }
+      .hc-given td { background: #eef2ff; }
       .hc-grid li { font-size: clamp(1rem, 1.4vw, 1.2rem); }
       .hc-grid.net .eq-row { flex-wrap: nowrap; font-size: clamp(0.95rem, 1.3vw, 1.15rem); }
       .eq-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin: 0 0 0.25rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: clamp(1rem, 1.45vw, 1.25rem); }
@@ -95,6 +98,7 @@
       .content table.mx-terms th { color: #6b7280; }
       .content table.mx-terms td:first-child, .content table.mx-terms th:first-child { padding-left: 0; text-align: left; }
       .slide .mx-hint { margin: 0.4rem 0 0; color: #6b7280; font-size: 0.85rem; }
+      .mx-passinfo { min-width: 0; color: #15803d; }
       .mx-anim .mx-in { animation: mx-in 0.25s ease-out both; animation-delay: var(--d, 0ms); }
       .mx-anim .mx-late { animation: mx-in 0.35s ease-out both; animation-delay: calc(var(--dur) + 150ms); }
       .mx-anim .mx-sweep { animation: mx-sweep var(--dur) steps(var(--rows), end) both, mx-out 0.3s var(--dur) forwards; }
@@ -262,7 +266,39 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">7 · Inference</p>
+    <p class="slide-kicker">7 · Who writes each slot</p>
+    <h2>Given by the tokens vs written by the network</h2>
+    <div class="hc-grid fill">
+      <div>
+        <div class="hc-controls" data-hc="fillctl"></div>
+        <div data-hc="fillfig"></div>
+      </div>
+      <div>
+        <table class="slide-table compact">
+          <thead><tr><th>Slot</th><th>Written by</th><th>Which rows</th></tr></thead>
+          <tbody>
+            <tr class="hc-given"><td>TL, TV, POS</td><td>input: \(E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}\)</td><td>TL at letters, TV at state tokens, POS everywhere</td></tr>
+            <tr><td>QRY</td><td>block 0, head 0</td><td>letters \(w_1..w_n\)</td></tr>
+            <tr><td>MATCH</td><td>block 0, MLP</td><td>letters equal to \(q\)</td></tr>
+            <tr><td>PREV, MT</td><td>process block 1, heads 0, 1</td><td>rows that predict \(s_t\)</td></tr>
+            <tr><td>CNT, S0</td><td>outcome block 1, heads 0, 1</td><td>the row that predicts \(s_n\)</td></tr>
+            <tr><td>OUT</td><td>block 1 MLP (process head 2 for the copy)</td><td>rows that predict a state</td></tr>
+          </tbody>
+        </table>
+        <ul>
+          <li data-step="1"><b>TV is never computed.</b> It is part of the input: the one-hot value of a state token.</li>
+          <li data-step="1">Row 0 holds \(s_0\), from the prompt.</li>
+          <li data-step="2"><b>Process:</b> rows \(s_1..s_n\) are tokens the model printed in earlier passes, fed back. Their TV is the model's own output, not a new slot.</li>
+          <li data-step="2"><b>Outcome:</b> no such rows. TV is set only at \(s_0\) and the final answer.</li>
+          <li data-step="3">Every other slot starts at 0 and is filled by one hand-written head or MLP.</li>
+          <li data-step="3">The map is free run: row \(i\) only sees rows \(\le i\), so one pass over the generated row gives the same rows as pass-by-pass generation. EOS is greyed out because no pass computes it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">8 · Inference</p>
     <h2>At inference: one token at a time</h2>
     <div class="hc-controls" data-hc="genctl"></div>
     <div data-hc="genfig" data-gen></div>
@@ -270,8 +306,8 @@
   </section>
 
   <section class="slide mx-slide">
-    <p class="slide-kicker">8 · Process program, every matrix</p>
-    <h2>Every head and MLP, as matrix products</h2>
+    <p class="slide-kicker">9 · Process program, every matrix</p>
+    <h2>Producing row 8: every matrix</h2>
     <div class="hc-controls mx-ctl" data-hc="mxctlp"></div>
     <div class="mx-grid">
       <div data-hc="mxfigp" data-mx="process"></div>
@@ -280,8 +316,8 @@
   </section>
 
   <section class="slide mx-slide">
-    <p class="slide-kicker">9 · Outcome program, every matrix</p>
-    <h2>Same network, outcome weights</h2>
+    <p class="slide-kicker">10 · Outcome program, every matrix</p>
+    <h2>Producing row 8, outcome weights</h2>
     <div class="hc-controls mx-ctl" data-hc="mxctlo"></div>
     <div class="mx-grid">
       <div data-hc="mxfigo" data-mx="outcome"></div>
@@ -290,7 +326,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">10 · Playground</p>
+    <p class="slide-kicker">11 · Playground</p>
     <h2>Run both programs</h2>
     <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
     <div class="hc-controls" data-hc="ctl8"></div>
@@ -310,7 +346,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">11 · Summary</p>
+    <p class="slide-kicker">12 · Summary</p>
     <h2>Same answer, very different programs</h2>
     <table class="slide-table">
       <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
@@ -458,7 +494,7 @@
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=10" defer></script>
+    <script src="/assets/handcoded-slides.js?v=14" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
