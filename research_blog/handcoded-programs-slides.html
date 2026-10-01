@@ -351,11 +351,13 @@
     <table class="slide-table">
       <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
       <tbody>
+        <tr><td>Embeddings + block 0</td><td colspan="2" style="text-align:center">identical weights (0 entries differ)</td></tr>
+        <tr><td>Block 1 + readout</td><td colspan="2" style="text-align:center">different weights (readout: just 4 entries, for ':' and EOS)</td></tr>
         <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
         <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
         <tr><td>Block-1 ReLU units</td><td>\(2m\) (example: 4)</td><td>\(3m(n{+}1)\) (example: 30)</td></tr>
         <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
-        <tr><td>Supervised tokens per row</td><td>\(n + 3\)</td><td>3</td></tr>
+        <tr><td>Supervised tokens</td><td>\(n + 3\)</td><td>3</td></tr>
       </tbody>
     </table>
     <ul>
@@ -494,7 +496,7 @@
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=14" defer></script>
+    <script src="/assets/handcoded-slides.js?v=15" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {

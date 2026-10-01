@@ -1156,7 +1156,7 @@
 
   function mxFig(prog) {
     const d = mxData(prog), svg = d.layout === "falk" ? falkSvg(d) : d.layout === "feed" ? feedSvg(d) : sideSvg(d);
-    svg.classList.add(MX[prog].anim ? "mx-anim" : "mx-still");
+    svg.classList.add("mx-still");   // matrix slides are static: no sweep, no row-by-row fill
     svg.addEventListener("click", (e) => {
       const t = e.target, i = t.getAttribute && t.getAttribute("data-i");
       if (i === null || i === undefined) return;
@@ -1177,10 +1177,10 @@
 
   function stageTitle0(st) {
     if (st.kind === "read") return "Readout";
-    if (st.kind === "blk0") return "Block 0 output";
+    if (st.kind === "blk0") return "Block 0 output (same weights in both programs)";
     if (st.kind === "feed") return "Readout → next input";
     const part = st.h !== undefined ? `head ${st.h}` : st.kind === "add" ? "attention" : "MLP";
-    return `Block ${st.b} · ${part} · ${KIND_LABEL[st.kind]}`;
+    return `Block ${st.b}${st.b === 0 ? " (same weights in both programs)" : ""} · ${part} · ${KIND_LABEL[st.kind]}`;
   }
 
   function formulaHtml(d) {
@@ -1214,7 +1214,7 @@
       case "relu": return "Negative entries become 0. In each row only the units whose condition holds stay positive.";
       case "out": return `Each surviving unit writes into its output slot. Slots written: ${slotsTouched(d.C.M)}.`;
       case "res": return `The MLP output is added to X. ${st.b === 0 ? "MATCH now holds the marks." : "OUT now holds the value each row prints."}`;
-      case "blk0": return "Block 0 has exactly the same weights as in the process program (previous slide): it writes QRY and MATCH. This is the X that enters block 1.";
+      case "blk0": return "Embeddings and block 0 are identical in both programs (0 weights differ): they write QRY and MATCH, as stepped through on the previous slide. Only block 1 and 4 readout entries differ. This is the X that enters block 1.";
       case "feed": return d.T + 1 > d.full.length
         ? "Last pass: EOS was printed, so generation stops."
         : `Row ${d.T - 1}'s block 1 wrote OUT, the readout printed “${tok(d.full[d.T])}”, and that token becomes row ${d.T} of the next pass, with its value in TV (bold green arrow). Pale arrows: tokens printed in earlier passes. These are the model's own prints, not gold answers. Next pass ▶ adds that row.`;
