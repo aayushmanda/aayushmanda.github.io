@@ -1386,13 +1386,13 @@
     const g = genPass(), wrap = el("div", "gen-info"), np = run.prompt.length;
     const p = (html) => { const e = el("p"); e.innerHTML = html; wrap.append(e); };
     if (g.done) {
-      p(`<b>${g.full.length - np} forward passes</b>, each on the tokens written so far, produced exactly the row shown in the matrix walkthrough: `
+      p(`<b>${g.full.length - np} forward passes</b>, each on the tokens written so far, produced this row. The next two slides take it apart matrix by matrix: `
         + g.full.slice(np).map((id) => `<span class="hc-chip${isValue(id) ? " val" : ""}">${tok(id)}</span>`).join(" "));
-      p("That is why drawing the whole row at once is fair: no row ever reads a later row, so the numbers are the same.");
+      p("They draw the finished row in one picture. That is fair because no row ever reads a later row, so every number is the same as in these passes.");
       return wrap;
     }
     p(`<b>Pass ${GEN.k + 1}.</b> Input: rows 0–${g.L - 1}. Row ${g.L - 1} predicts “${tok(g.pred)}” (logit ${fmtV(g.logits[g.pred])}, next best ${fmtV(g.runner)}), which is appended as row ${g.L}. ▶ runs the next pass with it.`);
-    p(`Same logits as row ${g.L - 1} of the full-row computation in the walkthrough: largest difference <b>${fmtV(g.diffMax)}</b>.`);
+    p(`Same logits as row ${g.L - 1} when the finished row is computed in one go (next slides): largest difference <b>${fmtV(g.diffMax)}</b>.`);
     return wrap;
   }
 
