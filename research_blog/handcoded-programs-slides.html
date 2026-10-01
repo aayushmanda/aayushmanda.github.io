@@ -37,6 +37,8 @@
       .hc-grid.play { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
       .hc-heat { max-width: 22.5rem; margin: 0; }
       .hc-heat.wide { max-width: none; }
+      .hc-grid.play .hc-heat { max-width: 34rem; }
+      .hc-grid.play li { font-size: clamp(1rem, 1.4vw, 1.2rem); }
       .eq-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin: 0 0 0.25rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: clamp(1rem, 1.45vw, 1.25rem); }
       .eq-row .shape { color: #6b7280; font-size: 0.85em; white-space: nowrap; }
       .slide .eq-row.is-current, .slide li[data-step].is-current, .slide .math[data-step].is-current { background: #f5f9ff; border-radius: 6px; }
@@ -53,6 +55,13 @@
       .hc-ok, .hc-bad { margin-left: 0.4rem; font-size: 0.95rem; font-weight: 700; }
       .hc-ok { color: #15803d; }
       .hc-bad { color: #b91c1c; }
+      .slide .idea, .slide .gen { margin: 0 0 0.6rem; padding: 0.45rem 0.85rem; border-radius: 0 8px 8px 0; font-size: clamp(1.02rem, 1.5vw, 1.25rem); line-height: 1.45; }
+      .slide .idea { border-left: 4px solid #c2410c; background: #fff7ed; color: #1f2937; }
+      .slide .gen { border-left: 4px solid #1d4ed8; background: #eff6ff; color: #1f2937; }
+      .tag-ex, .tag-gen { display: inline-block; margin-right: 0.45rem; padding: 0 0.4rem; border-radius: 4px; color: #ffffff; font-size: 0.72em; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; vertical-align: 0.12em; }
+      .tag-ex { background: #c2410c; }
+      .tag-gen { background: #1d4ed8; }
+      .slide .hc-sub { color: #4b5563; font-size: clamp(1rem, 1.4vw, 1.2rem); }
     </style>
     <script>
       window.MathJax = {
@@ -90,62 +99,65 @@
     <span data-count></span>
   </div>
 
+  <section class="slide slide-title">
+    <p class="slide-kicker">Process vs outcome supervision</p>
+    <h2>Two hand-written programs, one Transformer</h2>
+    <p>Letter counting: we write the exact weights for a <strong>step-by-step</strong> solution and an <strong>all-at-once</strong> solution, in the same 2-block architecture.</p>
+    <p class="hc-sub">Running example on every slide: \(s_0 = 1,\ q = \mathtt{a},\ \text{word} = \mathtt{b\,a\,d\,a\,c\,a}\). Every figure is computed live from the weights.</p>
+  </section>
+
   <section class="slide">
     <p class="slide-kicker">1 · Task</p>
-    <h2>Same prompt, two continuations</h2>
-    <ul>
-      <li>\(s_t = (s_{t-1} + [w_t = q]) \bmod m, \quad A = 4,\ m = 3,\ n = 6\)</li>
-    </ul>
+    <h2>Count the query letter, mod \(m\)</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(m = 3\): start at \(s_0 = 1\), add 1 at every <b>a</b> in b a d a c a. States: \(1, 2, 2, 0, 0, 1\). Answer \(s_6 = 1\).</div>
     <div class="fig" style="max-width:48rem" data-hc="fig1"></div>
-    <div class="math" data-step="3">\[
-      \mathcal{L}_{\mathrm{proc}} = -\sum_{t=1}^{n} \log p_\theta(s_t \mid \text{prompt}, s_{\lt t}) + \ell_{\mathrm{tail}},
-      \qquad \mathcal{L}_{\mathrm{out}} = \ell_{\mathrm{tail}} = -\log p_\theta({:}\ s_n\ \mathrm{EOS} \mid \text{prompt})
+    <div class="gen" data-step="4"><span class="tag-gen">In general</span> \(s_t = (s_{t-1} + [w_t = q]) \bmod m\). Process trains on \(s_1, \dots, s_n\) and the answer; outcome trains on the answer only:</div>
+    <div class="math sm" data-step="4">\[
+      \mathcal{L}_{\mathrm{proc}} = -\sum_{t=1}^{n} \log p_\theta(s_t \mid \text{prompt}, s_{\lt t}) + \ell_{\mathrm{ans}},
+      \qquad \mathcal{L}_{\mathrm{out}} = \ell_{\mathrm{ans}} = -\log p_\theta({:}\ s_n\ \mathrm{EOS} \mid \text{prompt})
     \]</div>
     <ul>
-      <li data-step="4">One architecture, two exact weight settings \(\theta_{\mathrm{proc}}, \theta_{\mathrm{out}}\)</li>
-      <li data-step="4">All figures computed live from these weights</li>
+      <li data-step="5">Same architecture for both. We write one exact weight setting for each: \(\theta_{\mathrm{proc}}\) and \(\theta_{\mathrm{out}}\).</li>
     </ul>
   </section>
 
   <section class="slide">
     <p class="slide-kicker">2 · Notation</p>
-    <h2>Symbols used throughout</h2>
+    <h2>Symbols and sizes</h2>
     <table class="slide-table compact">
       <thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th><th>Default run</th></tr></thead>
       <tbody>
         <tr><td>\(A\)</td><td>alphabet size (letters a, b, c, d)</td><td>4</td><td>4</td></tr>
         <tr><td>\(n\)</td><td>word length = number of steps</td><td>6</td><td>12</td></tr>
-        <tr><td>\(m\)</td><td>modulus: \(s_t \in \{0, \dots, m{-}1\}\)</td><td>3</td><td>2</td></tr>
+        <tr><td>\(m\)</td><td>modulus, \(s_t \in \{0, \dots, m{-}1\}\)</td><td>3</td><td>2</td></tr>
         <tr><td>\(q,\ s_0\)</td><td>query letter, start state</td><td>a, 1</td><td>random</td></tr>
         <tr><td>\(|\mathcal V| = A + m + 3\)</td><td>vocabulary: letters, values, SEP, :, EOS</td><td>10</td><td>9</td></tr>
-        <tr><td>\(P = 2n + 6\)</td><td>positions: prompt \(n{+}3\) + process tail \(n{+}3\)</td><td>18</td><td>30</td></tr>
-        <tr><td>\(T \le P\)</td><td>length of the current row</td><td>\(\le 18\)</td><td>\(\le 30\)</td></tr>
-        <tr><td>\(H\)</td><td>heads per block</td><td>3</td><td>3</td></tr>
-        <tr><td>\(W = 2A + 4m + 2n + 9\)</td><td>residual width (sum of slot sizes)</td><td>41</td><td>49</td></tr>
+        <tr><td>\(P = 2n + 6\)</td><td>max row length (prompt \(n{+}3\), process tail \(n{+}3\))</td><td>18</td><td>30</td></tr>
+        <tr><td>\(W = 2A + 4m + 2n + 9\)</td><td>residual width</td><td>41</td><td>49</td></tr>
         <tr><td>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</td><td>MLP hidden width</td><td>63</td><td>78</td></tr>
-        <tr><td>\(\mathrm{GAP},\ C = \mathrm{GAP}\sqrt{P}\)</td><td>routing margin, query scale</td><td>16</td><td>16</td></tr>
       </tbody>
     </table>
+    <p class="hc-sub">\(H = 3\) heads per block, \(L = 2\) blocks, no LayerNorm.</p>
   </section>
 
   <section class="slide">
     <p class="slide-kicker">3 · Architecture</p>
-    <h2>\(L = 2\) blocks, \(H = 3\) heads, no LayerNorm</h2>
+    <h2>A plain 2-block Transformer</h2>
     <div class="hc-grid">
       <div>
-        <div class="eq-row" data-step="1"><span>\(X^{(0)} = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">\(T \times W\)</span></div>
-        <div class="eq-row" data-step="2"><span>\(S_h = (X W^{Q\top}_h)(X W^{K\top}_h)^{\top} / \sqrt{P} + M\)</span><span class="shape">\((T{\times}P)(P{\times}T)\)</span></div>
-        <div class="eq-row" data-step="3"><span>\(X \mathrel{+}= \sum_{h=1}^{3} \mathrm{softmax}(S_h)\, X W^{V\top}_h\)</span><span class="shape">\((T{\times}T)(T{\times}W)\)</span></div>
-        <div class="eq-row" data-step="4"><span>\(X \mathrel{+}= \mathrm{ReLU}(X W_{\mathrm{in}}^{\top} + b)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">\((T{\times}F)(F{\times}W)\)</span></div>
+        <div class="eq-row" data-step="1"><span>\(X = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">\(T \times W\)</span></div>
+        <div class="eq-row" data-step="2"><span>\(S_h = (X W^{Q\top}_h)(X W^{K\top}_h)^{\top} / \sqrt{P} + \text{causal mask}\)</span></div>
+        <div class="eq-row" data-step="3"><span>\(X \mathrel{+}= \sum_{h} \mathrm{softmax}(S_h)\, X W^{V\top}_h\)</span><span class="shape">attention</span></div>
+        <div class="eq-row" data-step="4"><span>\(X \mathrel{+}= \mathrm{ReLU}(X W_{\mathrm{in}}^{\top} + b)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">MLP</span></div>
         <div class="eq-row" data-step="5"><span>\(\mathrm{logits} = X R^{\top}\)</span><span class="shape">\(T \times |\mathcal V|\)</span></div>
         <ul>
-          <li data-step="5">\(M_{ij} = -\infty\) for \(j > i\)</li>
-          <li data-step="5">\(d_{qk} = P\): one coordinate per position</li>
+          <li data-step="5">Repeat the attention + MLP lines once per block (\(L = 2\))</li>
+          <li data-step="5">Query/key width is \(P\): one coordinate per position</li>
         </ul>
       </div>
       <div data-step="6">
         <table class="slide-table compact">
-          <thead><tr><th>Tensor</th><th>Shape</th><th>\(n{=}6, m{=}3\)</th><th>\(n{=}12, m{=}2\)</th></tr></thead>
+          <thead><tr><th>Tensor</th><th>Shape</th><th>Example</th><th>Default</th></tr></thead>
           <tbody>
             <tr><td>\(E_{\mathrm{tok}}, R\)</td><td>\(|\mathcal V| \times W\)</td><td>10 × 41</td><td>9 × 49</td></tr>
             <tr><td>\(E_{\mathrm{pos}}\)</td><td>\(P \times W\)</td><td>18 × 41</td><td>30 × 49</td></tr>
@@ -155,84 +167,65 @@
             <tr><td>Parameters</td><td></td><td>30,958</td><td>49,842</td></tr>
           </tbody>
         </table>
-        <ul>
-          <li>\(|\mathcal V| = A + m + 3, \quad P = 2n + 6\)</li>
-          <li>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</li>
-        </ul>
       </div>
     </div>
   </section>
 
   <section class="slide">
     <p class="slide-kicker">4 · Residual stream</p>
-    <h2>Block encoding: named slots</h2>
+    <h2>Each quantity gets its own named slot</h2>
+    <div class="idea"><span class="tag-ex">Example</span> At the letter <b>a</b>: TL holds \(e_{\mathtt a}\), block 0 writes QRY \(= e_{\mathtt a}\) and MATCH \(= 1\). Click a slot to see who writes and reads it.</div>
     <div class="fig" style="max-width:42rem" data-hc="slots"></div>
     <div data-hc="slotinfo"></div>
-    <div class="math" data-step="1">\[
-      E_{\mathrm{tok}}[a, \mathrm{TL}_a] = 1, \quad E_{\mathrm{tok}}[A{+}v, \mathrm{TV}_v] = 1, \quad E_{\mathrm{pos}}[i, \mathrm{POS}_i] = 1
-    \]</div>
-    <div class="math" data-step="3">\[
-      W = \underbrace{A + m + P}_{\text{embeddings}} + \underbrace{A + 1}_{\text{block 0}} + \underbrace{m + 1}_{\text{process}} + \underbrace{1 + m}_{\text{outcome}} + \underbrace{m}_{\mathrm{OUT}} = 2A + 4m + 2n + 9 = 41
-    \]</div>
+    <div class="gen" data-step="3"><span class="tag-gen">In general</span> \(W = \underbrace{A + m + P}_{\text{embeddings}} + \underbrace{A + 1}_{\text{block 0}} + \underbrace{m + 1}_{\text{process}} + \underbrace{1 + m}_{\text{outcome}} + \underbrace{m}_{\mathrm{OUT}} = 2A + 4m + 2n + 9\)</div>
     <ul>
-      <li data-step="4">Weights are blocks between slots: \(W^{V}[\mathrm{dst}, \mathrm{src}] = I\); readout \(R[A{+}v, \mathrm{OUT}_v] = 20\)</li>
+      <li data-step="4">So every weight is a copy from one slot to another, e.g. \(W^{V}[\mathrm{dst}, \mathrm{src}] = I\). Readout: \(R[A{+}v, \mathrm{OUT}_v] = 20\).</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">5 · Routing</p>
-    <h2>Attention as position lookup</h2>
+    <p class="slide-kicker">5 · Attention</p>
+    <h2>Each head looks up one position</h2>
     <div class="hc-grid heat">
       <div>
         <div class="hc-controls" data-hc="heads"></div>
         <div data-hc="fig4"></div>
       </div>
       <div>
-        <div class="eq-row" data-step="1"><span>\(W^{K}_h[:, \mathrm{POS}] = I_P \;\Rightarrow\; k_j = e_j \in \mathbb{R}^{P}\)</span></div>
-        <div class="eq-row" data-step="2"><span>\(W^{Q}_h[\mathrm{tgt}(i), \mathrm{POS}_i] = C \;\Rightarrow\; q_i = C\, e_{\mathrm{tgt}(i)}\)</span></div>
-        <div class="eq-row" data-step="3"><span>\(\dfrac{q_i^{\top} k_j}{\sqrt{P}} = \mathrm{GAP} \cdot \mathbb{1}[j = \mathrm{tgt}(i)], \quad C = \mathrm{GAP}\sqrt{P}\)</span></div>
-        <div class="eq-row" data-step="4"><span>\(\text{leak} \le (T{-}1)\, e^{-\mathrm{GAP}} \le \dfrac{2(n+3)}{(8(n+3))^{3}}\)</span></div>
+        <div class="idea"><span class="tag-ex">Example</span> Proc h1: each state row (8–13) reads its own letter \(w_t\) (rows 2–7), a diagonal. Other rows fall back to row 0. Click the buttons for the other heads.</div>
+        <div class="eq-row" data-step="1"><span>Keys: \(k_j = e_j\) (position one-hot)</span></div>
+        <div class="eq-row" data-step="2"><span>Query at \(i\): \(q_i = C\, e_{\mathrm{tgt}(i)}\)</span></div>
+        <div class="eq-row" data-step="3"><span>Score \(= \mathrm{GAP}\) on the target, \(0\) elsewhere</span></div>
         <ul>
-          <li data-step="4">\(\mathrm{GAP} = \max\{16,\ 3 \log 8(n{+}3)\} \;\Rightarrow\; \text{weight off target} \le e^{-16} \approx 10^{-7}\)</li>
-          <li data-step="5">Copy: \(W^{V}_0[\mathrm{QRY}, \mathrm{TL}] = I_A\)</li>
-          <li data-step="5">Several targets \(\Rightarrow\) uniform average</li>
+          <li data-step="4">\(\mathrm{GAP} = 16\) here: weight off the target \(\le (T{-}1)\,e^{-16} \lt 10^{-5}\)</li>
+          <li data-step="5">Value copies a slot, e.g. \(W^{V}_0[\mathrm{QRY}, \mathrm{TL}] = I\)</li>
+          <li data-step="5">Several targets give a uniform average</li>
         </ul>
       </div>
     </div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">6 · Block 0 (shared)</p>
-    <h2>Match marks \([w_t = q]\)</h2>
-    <div class="math">\[
-      x_{\mathrm{QRY}} \leftarrow x_{\mathrm{TL}}^{(\text{row } 1)} = e_q, \qquad
-      x_{\mathrm{MATCH}} \mathrel{+}= 2\sum_{a=1}^{A} \mathrm{ReLU}\big(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - \tfrac32\big) = [w_t = q]
-    \]</div>
+    <p class="slide-kicker">6 · Block 0 (shared by both)</p>
+    <h2>Mark each letter: is it \(q\)?</h2>
+    <div class="idea"><span class="tag-ex">Example</span> b a d a c a \(\to\) marks 0 1 0 1 0 1.</div>
     <div class="fig" style="max-width:46rem" data-hc="fig5"></div>
-    <ul>
-      <li data-step="3">\(A\) units: \(W_{\mathrm{in}}[a, \mathrm{TL}_a] = W_{\mathrm{in}}[a, \mathrm{QRY}_a] = 1,\ \ b_a = -\tfrac32,\ \ W_{\mathrm{out}}[\mathrm{MATCH}, a] = 2\)</li>
-    </ul>
+    <div class="gen" data-step="3"><span class="tag-gen">In general</span> Head 0 copies \(q\) into QRY; the MLP writes \(\mathrm{MATCH} = 2\sum_a \mathrm{ReLU}(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - \tfrac32) = [w_t = q]\).</div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">7 · Block 0 · MLP collapse</p>
-    <h2>MLP \(\Rightarrow [w_t = q]\)</h2>
-    <div class="math sm">\[
-      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
-      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
-    \]</div>
+    <p class="slide-kicker">7 · Block 0 · inside the MLP</p>
+    <h2>One unit per letter, an AND gate</h2>
+    <div class="idea"><span class="tag-ex">Example</span> At \(w_2 = \mathtt a\): unit \(\mathtt a\) gets \(1 + 1 - 1.5 = 0.5\), times 2 gives MATCH \(= 1\). At \(w_1 = \mathtt b\): unit \(\mathtt b\) gets \(1 + 0 - 1.5 \lt 0\), so 0.</div>
     <div class="math sm" data-step="1">\[
-      \begin{array}{c|cc} W_{\mathrm{in}}[a,:] & \mathrm{TL}_a & \mathrm{QRY}_a \\ \hline u = a & 1 & 1 \end{array}
+      \begin{array}{c|cc} W_{\mathrm{in}} & \mathrm{TL}_a & \mathrm{QRY}_a \\ \hline u_a & 1 & 1 \end{array}
       \qquad
       \begin{array}{c} b \\ \hline -\tfrac32 \end{array}
       \qquad
-      \begin{array}{c|c} W_{\mathrm{out}}[:,a]^{\top} & \mathrm{MATCH} \\ \hline u = a & 2 \end{array}
+      \begin{array}{c|c} W_{\mathrm{out}}^{\top} & \mathrm{MATCH} \\ \hline u_a & 2 \end{array}
       \qquad a = 1, \dots, A
     \]</div>
-    <div class="math sm" data-step="2">\[
-      \Delta x_{\mathrm{MATCH}} = 2 \sum_{a=1}^{A} \mathrm{ReLU}\big(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - \tfrac32\big)
-    \]</div>
-    <div class="hc-grid" data-step="3">
+    <div class="hc-grid" data-step="2">
       <table class="slide-table compact">
         <thead><tr><th>\(x_{\mathrm{TL}_a}\)</th><th>\(x_{\mathrm{QRY}_a}\)</th><th>pre-act</th><th>\(2 h_a\)</th></tr></thead>
         <tbody>
@@ -243,113 +236,76 @@
         </tbody>
       </table>
       <ul>
-        <li>\(x_{\mathrm{TL}} = e_{w_t}\), \(x_{\mathrm{QRY}} = e_q\)</li>
-        <li>only \(a = w_t = q\) fires</li>
-        <li>\(\Rightarrow \Delta x_{\mathrm{MATCH}} = [w_t = q]\)</li>
+        <li><span class="tag-gen">In general</span> only the unit \(a = w_t = q\) fires</li>
+        <li>\(\Rightarrow \mathrm{MATCH} = [w_t = q]\)</li>
       </ul>
     </div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">8 · Block 1 · process</p>
-    <h2>One update per state</h2>
+    <p class="slide-kicker">8 · Process · block 1</p>
+    <h2>Each step: last state + one mark</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(t = 4\): previous state \(s_3 = 2\), mark of \(w_4 = \mathtt a\) is 1, so \(s_4 = (2 + 1) \bmod 3 = 0\). Step through \(t\) below.</div>
     <div class="hc-controls" data-hc="ctl6"></div>
     <div class="fig" style="max-width:48rem" data-hc="fig6"></div>
-    <div class="math" data-step="3">\[
-      u^{0}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - \tfrac12) \to \mathrm{OUT}_j,
-      \;\;
-      u^{1}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} + x_{\mathrm{MT}} - \tfrac32) \to \mathrm{OUT}_{(j+1) \bmod m}
-    \]</div>
-    <ul>
-      <li data-step="4">One unit fires at \(\tfrac12\); \(W_{\mathrm{out}} = 2 \Rightarrow x_{\mathrm{OUT}} = e_{s_t}\)</li>
-      <li data-step="4">Per state: one mark + \(s_{t-1}\)</li>
-    </ul>
+    <div class="gen" data-step="4"><span class="tag-gen">In general</span> Head 0 brings \(s_{t-1}\) (PREV), head 1 brings \([w_t = q]\) (MT); \(2m\) MLP units compute \(s_t\). The work per step does not depend on \(n\).</div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">9 · Process · MLP collapse</p>
-    <h2>MLP \(\Rightarrow s_t = (s_{t-1} + [w_t = q]) \bmod m\)</h2>
-    <div class="math sm">\[
-      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
-      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
-    \]</div>
+    <p class="slide-kicker">9 · Process · inside the MLP</p>
+    <h2>Two units per state value</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(\mathrm{PREV} = e_2,\ \mathrm{MT} = 1\): unit \(u^1_2 = \mathrm{ReLU}(1 + 1 - 1.5) = 0.5\) fires and writes \(\mathrm{OUT}_{0}\). All others are \(\le 0\).</div>
     <div class="math sm" data-step="1">\[
-      \begin{array}{c|cc} W_{\mathrm{in}} & \mathrm{PREV}_j & \mathrm{MT} \\ \hline u^0_j & 1 & -1 \\ u^1_j & 1 & 1 \end{array}
+      \underbrace{u^{0}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - \tfrac12)}_{\text{no match: stay at } j} \to \mathrm{OUT}_j,
       \qquad
-      \begin{array}{c} b \\ \hline -\tfrac12 \\ -\tfrac32 \end{array}
-      \qquad
-      \begin{array}{c|cc} W_{\mathrm{out}}^{\top} & \mathrm{OUT}_j & \mathrm{OUT}_{j+1} \\ \hline u^0_j & 2 & 0 \\ u^1_j & 0 & 2 \end{array}
-      \qquad j = 0, \dots, m{-}1
+      \underbrace{u^{1}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} + x_{\mathrm{MT}} - \tfrac32)}_{\text{match: move to } j+1} \to \mathrm{OUT}_{(j+1) \bmod m}
     \]</div>
-    <div class="math sm" data-step="2">\[
-      \Delta x_{\mathrm{OUT}} = \sum_{j=0}^{m-1} 2\,\mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - \tfrac12)\, e_j
-      + 2\,\mathrm{ReLU}(x_{\mathrm{PREV}_j} + x_{\mathrm{MT}} - \tfrac32)\, e_{(j+1) \bmod m}
-    \]</div>
-    <div class="hc-grid" data-step="3">
+    <div class="hc-grid" data-step="2">
       <table class="slide-table compact">
         <thead><tr><th>\(x_{\mathrm{PREV}_j}\)</th><th>\(x_{\mathrm{MT}}\)</th><th>\(u^0_j\)</th><th>\(u^1_j\)</th><th>writes</th></tr></thead>
         <tbody>
-          <tr><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>0</td><td>\(\mathrm{OUT}_j = 1\)</td></tr>
-          <tr><td>1</td><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>\(\mathrm{OUT}_{j+1} = 1\)</td></tr>
-          <tr><td>0</td><td>0, 1</td><td>0</td><td>0</td><td>nothing</td></tr>
+          <tr><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>0</td><td>\(\mathrm{OUT}_j\)</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>\(\mathrm{OUT}_{j+1}\)</td></tr>
+          <tr><td>0</td><td>0 or 1</td><td>0</td><td>0</td><td>nothing</td></tr>
         </tbody>
       </table>
       <ul>
-        <li>\(x_{\mathrm{PREV}} = e_{s_{t-1}}\), \(x_{\mathrm{MT}} = [w_t = q]\)</li>
-        <li>\(\Rightarrow \Delta x_{\mathrm{OUT}} = e_{(s_{t-1} + [w_t = q]) \bmod m} = e_{s_t}\)</li>
+        <li><span class="tag-gen">In general</span> \(W_{\mathrm{out}} = 2\) turns the \(\tfrac12\) into \(1\)</li>
+        <li>\(\Rightarrow \mathrm{OUT} = e_{(s_{t-1} + [w_t = q]) \bmod m} = e_{s_t}\)</li>
       </ul>
     </div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">10 · Block 1 · outcome</p>
-    <h2>All \(n\) marks at the colon</h2>
+    <p class="slide-kicker">10 · Outcome · block 1</p>
+    <h2>One position reads all \(n\) marks at once</h2>
+    <div class="idea"><span class="tag-ex">Example</span> At ':', head 0 averages the marks 0 1 0 1 0 1 \(\to \tfrac36\), times 6 gives count \(c = 3\). Head 1 reads \(s_0 = 1\). Answer \((1 + 3) \bmod 3 = 1\).</div>
     <div class="hc-controls" data-hc="ctl7"></div>
     <div class="fig" style="max-width:45rem" data-hc="fig7"></div>
-    <div class="math" data-step="3">\[
-      x_{\mathrm{CNT}} = n \cdot \tfrac{1}{n}\textstyle\sum_t [w_t = q] = c, \quad
-      \beta_{c'}(x) = r(x{-}c'{+}1) - 2r(x{-}c') + r(x{-}c'{-}1) = \mathbb{1}[x = c']
-    \]</div>
-    <ul>
-      <li data-step="4">Gate: \(x = x_{\mathrm{CNT}} + (n{+}2)(x_{\mathrm{S0}_j} - 1)\); \(\ j \ne s_0 \Rightarrow x \le -2\), off</li>
-      <li data-step="4">\(3m(n{+}1) = 63\) units, all used</li>
-    </ul>
+    <div class="gen" data-step="4"><span class="tag-gen">In general</span> The MLP needs one detector for every pair \((s_0, c)\), \(c = 0, \dots, n\): that is \(3m(n{+}1)\) units, growing with \(n\).</div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">11 · Outcome · MLP collapse</p>
-    <h2>MLP \(\Rightarrow s_n = (s_0 + c) \bmod m\)</h2>
-    <div class="math sm">\[
-      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
-      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
-    \]</div>
+    <p class="slide-kicker">11 · Outcome · inside the MLP</p>
+    <h2>A bump detector for each count</h2>
+    <div class="idea"><span class="tag-ex">Example</span> \(c = 3\): the bump for \(c' = 3\) gives \(r(1) - 2r(0) + r(-1) = 1\). The bump for \(c' = 2\) gives \(r(2) - 2r(1) + r(0) = 0\).</div>
     <div class="math sm" data-step="1">\[
-      \begin{array}{c|cc} W_{\mathrm{in}} & \mathrm{CNT} & \mathrm{S0}_j \\ \hline u_{j,c,k} & 1 & n{+}2 \end{array}
-      \qquad
-      \begin{array}{c} b \\ \hline k - c - (n{+}2) \end{array}
-      \qquad
-      \begin{array}{c|c} W_{\mathrm{out}}^{\top} & \mathrm{OUT}_{(j+c) \bmod m} \\ \hline u_{j,c,k} & \alpha_k \end{array}
-      \qquad (\alpha_{+1}, \alpha_0, \alpha_{-1}) = (1, -2, 1)
+      \beta_{c'}(x) = r(x{-}c'{+}1) - 2\,r(x{-}c') + r(x{-}c'{-}1) = \mathbb{1}[x = c'] \quad \text{for integer } x,
+      \qquad r = \mathrm{ReLU}
     \]</div>
-    <div class="math sm" data-step="2">\[
-      \begin{gathered}
-      z_{j,c,k} = (x_{\mathrm{CNT}} - c + k) + (n{+}2)(x_{\mathrm{S0}_j} - 1) \\
-      \Delta x_{\mathrm{OUT}} = \sum_{j < m,\ c \le n} \big[ r(z_{j,c,+1}) - 2 r(z_{j,c,0}) + r(z_{j,c,-1}) \big]\, e_{(j+c) \bmod m}
-      \end{gathered}
-    \]</div>
-    <div class="hc-grid" data-step="3">
+    <div class="hc-grid" data-step="2">
       <table class="slide-table compact">
-        <thead><tr><th>\(x_{\mathrm{CNT}}\)</th><th>\(r(x{-}c{+}1)\)</th><th>\(r(x{-}c)\)</th><th>\(r(x{-}c{-}1)\)</th><th>\(\beta_c\)</th></tr></thead>
+        <thead><tr><th>\(x = c\)</th><th>\(r(x{-}c'{+}1)\)</th><th>\(r(x{-}c')\)</th><th>\(r(x{-}c'{-}1)\)</th><th>\(\beta_{c'}\)</th></tr></thead>
         <tbody>
-          <tr><td>\(\le c{-}1\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
-          <tr><td>\(c\)</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
-          <tr><td>\(c{+}d,\ d \ge 1\)</td><td>\(d{+}1\)</td><td>\(d\)</td><td>\(d{-}1\)</td><td>0</td></tr>
+          <tr><td>\(\le c'{-}1\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>\(c'\)</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+          <tr><td>\(c'{+}d,\ d \ge 1\)</td><td>\(d{+}1\)</td><td>\(d\)</td><td>\(d{-}1\)</td><td>0</td></tr>
         </tbody>
       </table>
       <ul>
-        <li>\(j \ne s_0\): \(x_{\mathrm{S0}_j} = 0 \Rightarrow z \lt 0\), off</li>
-        <li>\(j = s_0\): bracket \(= \beta_c(x_{\mathrm{CNT}}) = \mathbb{1}[x_{\mathrm{CNT}} = c]\)</li>
-        <li>\(\Rightarrow \Delta x_{\mathrm{OUT}} = e_{(s_0 + c) \bmod m} = e_{s_n}\)</li>
+        <li><span class="tag-gen">In general</span> bump \((j, c')\) writes \(\mathrm{OUT}_{(j + c') \bmod m}\)</li>
+        <li>Gate: add \((n{+}2)(x_{\mathrm{S0}_j} - 1)\), so only \(j = s_0\) can fire</li>
+        <li>\(\Rightarrow \mathrm{OUT} = e_{(s_0 + c) \bmod m} = e_{s_n}\)</li>
       </ul>
     </div>
   </section>
@@ -357,6 +313,7 @@
   <section class="slide">
     <p class="slide-kicker">12 · Playground</p>
     <h2>Run both programs</h2>
+    <p class="hc-sub">Change the query, start state or letters. Both programs should match the gold row for every input.</p>
     <div class="hc-controls" data-hc="ctl8"></div>
     <div class="hc-grid play">
       <div>
@@ -365,25 +322,37 @@
       </div>
       <div>
         <div data-hc="outputs"></div>
-        <table class="slide-table compact">
-          <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
-          <tbody>
-            <tr><td>Block-1 heads</td><td>3</td><td>2</td></tr>
-            <tr><td>Block-1 units</td><td>\(2m = 6\)</td><td>\(3m(n{+}1) = 63\)</td></tr>
-            <tr><td>Marks per output</td><td>1</td><td>\(n\)</td></tr>
-            <tr><td>Supervised tokens</td><td>\(n + 3\)</td><td>3</td></tr>
-          </tbody>
-        </table>
         <ul>
+          <li>Rows = positions, columns = residual slots</li>
           <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
         </ul>
       </div>
     </div>
   </section>
+
+  <section class="slide">
+    <p class="slide-kicker">13 · Summary</p>
+    <h2>Same answer, very different programs</h2>
+    <table class="slide-table">
+      <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
+      <tbody>
+        <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
+        <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
+        <tr><td>Block-1 MLP units</td><td>\(2m\) (example: 6)</td><td>\(3m(n{+}1)\) (example: 63)</td></tr>
+        <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
+        <tr><td>Supervised tokens per row</td><td>\(n + 3\)</td><td>3</td></tr>
+      </tbody>
+    </table>
+    <ul>
+      <li data-step="1">Both programs are exact and live in the same architecture.</li>
+      <li data-step="2">Process: a small rule applied \(n\) times. Outcome: one large lookup over every possible count.</li>
+      <li data-step="3">Next: train one random \(\theta_0\) under each loss and compare it against these two programs.</li>
+    </ul>
+  </section>
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=3" defer></script>
+    <script src="/assets/handcoded-slides.js?v=4" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {

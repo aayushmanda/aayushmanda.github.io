@@ -450,7 +450,7 @@
 
   // ------------------------------------------------------------------ slide 5: block 0
   function fig5() {
-    const svg = newSvg(900, 352), tr = run.process.trace, ids = run.process.ids, y = 105;
+    const svg = newSvg(900, 372), tr = run.process.trace, ids = run.process.ids, y = 105;
     const b0 = tr.blocks[0], qx = 60;
     token(svg, qx, y, 70, 42, ids[1], BLUE_HI);
     text(svg, qx + 35, y - 6, "row 1: q", { size: 11, fill: GRAY, anchor: "middle" });
@@ -475,7 +475,7 @@
       text(g3, c, y + 195, plain(match), { size: 20, weight: 700, anchor: "middle", fill: hit ? BLUE : GRAY });
       if (hit && !hitCaption) {
         hitCaption = true;
-        text(g3, c, y + 238, "1 + 1 − 1.5 = 0.5, ReLU × 2 = 1", { size: 14, fill: ORANGE, weight: 700, anchor: "middle" });
+        text(g3, c, y + 258, "1 + 1 − 1.5 = 0.5, ReLU × 2 = 1", { size: 14, fill: ORANGE, weight: 700, anchor: "middle" });
       } else if (!hit && !missCaption) {
         missCaption = true;
         text(g3, c, y + 238, "0 + 1 − 1.5 < 0, ReLU = 0", { size: 14, fill: GRAY, anchor: "middle" });
