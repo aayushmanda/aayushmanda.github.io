@@ -6,7 +6,7 @@
   "use strict";
 
   // ------------------------------------------------------------------ model
-  const A = 4, N = 6, M = 3, H = 3, L = 2;
+  const A = 4, N = 4, M = 2, H = 3, L = 2;
   const V = M, SEP = A + V, COLON = A + V + 1, EOS = A + V + 2, VOCAB = A + V + 3;
   const P = 2 * N + 6, F = Math.max(A, 3 * V * (N + 1), 2 * N + 1);
   const SLOT_SIZES = [["TL", A], ["TV", V], ["POS", P], ["QRY", A], ["MATCH", 1],
@@ -174,7 +174,7 @@
   const PARAMS = { process: processSolution(), outcome: outcomeSolution() };
 
   // ------------------------------------------------------------------ state
-  const DEFAULT = { s0: 1, q: 0, word: [1, 0, 3, 0, 2, 0] };
+  const DEFAULT = { s0: 1, q: 0, word: [1, 0, 3, 0] };
   const state = { s0: 1, q: 0, word: DEFAULT.word.slice(), t: 4, head: "p1h1", slot: null,
                   prog: "process", layer: 2 };
   let run = null;
@@ -541,8 +541,8 @@
       token(svg, x0 + i * st, y, bw, 42, id, style);
       text(svg, cx(i), y - 6, String(i), { size: 11, fill: GRAY, anchor: "middle" });
     });
-    text(svg, cx(2), y + 64, "w₁ … w₆", { size: 13, fill: GRAY, anchor: "start" });
-    text(svg, cx(N + 3), y + 64, "emitted s₁ … s₆", { size: 13, fill: GRAY, anchor: "start" });
+    text(svg, cx(2), y + 64, `w₁ … w${sub(N)}`, { size: 13, fill: GRAY, anchor: "start" });
+    text(svg, cx(N + 3), y + 64, `emitted s₁ … s${sub(N)}`, { size: 13, fill: GRAY, anchor: "start" });
 
     const g1 = group(svg, 1);
     if (t === 1) arc(g1, cx(r), cx(0), y - 12, 120, BLUE, svg.mk.b);
