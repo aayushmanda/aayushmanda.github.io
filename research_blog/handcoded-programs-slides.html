@@ -90,30 +90,36 @@
   </div>
 
   <section class="slide">
-    <p class="slide-kicker">1 · The task and the two losses</p>
+    <p class="slide-kicker">1 · Task</p>
     <h2>Same prompt, two continuations</h2>
-    <p>Count the query letter modulo \(m\): \(s_t = (s_{t-1} + [w_t = q]) \bmod m\). Each letter either keeps the state or adds one. Running example: \(A = 4\) letters, \(m = 3\), \(n = 6\).</p>
+    <ul>
+      <li>\(s_t = (s_{t-1} + [w_t = q]) \bmod m, \quad A = 4,\ m = 3,\ n = 6\)</li>
+    </ul>
     <div class="fig" style="max-width:48rem" data-hc="fig1"></div>
     <div class="math" data-step="3">\[
       \mathcal{L}_{\mathrm{proc}} = -\sum_{t=1}^{n} \log p_\theta(s_t \mid \text{prompt}, s_{\lt t}) + \ell_{\mathrm{tail}},
       \qquad \mathcal{L}_{\mathrm{out}} = \ell_{\mathrm{tail}} = -\log p_\theta({:}\ s_n\ \mathrm{EOS} \mid \text{prompt})
     \]</div>
     <ul>
-      <li data-step="4">Both programs on the next slides are exact weight settings of the <em>same</em> tensors. Every figure is computed live from those weights in this page; slide 8 lets you change the word.</li>
+      <li data-step="4">One architecture, two exact weight settings \(\theta_{\mathrm{proc}}, \theta_{\mathrm{out}}\)</li>
+      <li data-step="4">All figures computed live from these weights</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">2 · One architecture</p>
-    <h2>Two blocks, three heads, no LayerNorm</h2>
+    <p class="slide-kicker">2 · Architecture</p>
+    <h2>\(L = 2\) blocks, \(H = 3\) heads, no LayerNorm</h2>
     <div class="hc-grid">
       <div>
         <div class="eq-row" data-step="1"><span>\(X^{(0)} = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">\(T \times W\)</span></div>
         <div class="eq-row" data-step="2"><span>\(S_h = (X W^{Q\top}_h)(X W^{K\top}_h)^{\top} / \sqrt{P} + M\)</span><span class="shape">\((T{\times}P)(P{\times}T)\)</span></div>
         <div class="eq-row" data-step="3"><span>\(X \mathrel{+}= \sum_{h=1}^{3} \mathrm{softmax}(S_h)\, X W^{V\top}_h\)</span><span class="shape">\((T{\times}T)(T{\times}W)\)</span></div>
         <div class="eq-row" data-step="4"><span>\(X \mathrel{+}= \mathrm{ReLU}(X W_{\mathrm{in}}^{\top} + b)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">\((T{\times}F)(F{\times}W)\)</span></div>
-        <div class="eq-row" data-step="5"><span>\(\mathrm{logits} = X R^{\top}\) after blocks \(\ell = 0, 1\)</span><span class="shape">\(T \times |\mathcal V|\)</span></div>
-        <p class="hc-info" data-step="5">\(M\) is the causal mask (\(-\infty\) above the diagonal). The query and key width is \(P\), the number of positions, so a head can address any row.</p>
+        <div class="eq-row" data-step="5"><span>\(\mathrm{logits} = X R^{\top}\)</span><span class="shape">\(T \times |\mathcal V|\)</span></div>
+        <ul>
+          <li data-step="5">\(M_{ij} = -\infty\) for \(j > i\)</li>
+          <li data-step="5">\(d_{qk} = P\): one coordinate per position</li>
+        </ul>
       </div>
       <div data-step="6">
         <table class="slide-table compact">
@@ -127,14 +133,17 @@
             <tr><td>Parameters</td><td></td><td>30,958</td><td>49,842</td></tr>
           </tbody>
         </table>
-        <p class="hc-info">Attention and MLP tensors are per block. \(|\mathcal V| = A + m + 3\), \(P = 2n + 6\), \(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\), \(W = 2A + 4m + 2n + 9\).</p>
+        <ul>
+          <li>\(|\mathcal V| = A + m + 3, \quad P = 2n + 6\)</li>
+          <li>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</li>
+        </ul>
       </div>
     </div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">3 · Block encoding of the residual stream</p>
-    <h2>Every coordinate has a name</h2>
+    <p class="slide-kicker">3 · Residual stream</p>
+    <h2>Block encoding: named slots</h2>
     <div class="fig" style="max-width:42rem" data-hc="slots"></div>
     <div data-hc="slotinfo"></div>
     <div class="math" data-step="1">\[
@@ -144,13 +153,13 @@
       W = \underbrace{A + m + P}_{\text{embeddings}} + \underbrace{A + 1}_{\text{block 0}} + \underbrace{m + 1}_{\text{process}} + \underbrace{1 + m}_{\text{outcome}} + \underbrace{m}_{\mathrm{OUT}} = 2A + 4m + 2n + 9 = 41
     \]</div>
     <ul>
-      <li data-step="4">Every weight is a block matrix between named slots, e.g. \(W^{V}[\mathrm{dst}, \mathrm{src}] = I\). Readout: \(R[A{+}v, \mathrm{OUT}_v] = 20\).</li>
+      <li data-step="4">Weights are blocks between slots: \(W^{V}[\mathrm{dst}, \mathrm{src}] = I\); readout \(R[A{+}v, \mathrm{OUT}_v] = 20\)</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">4 · The one attention trick</p>
-    <h2>A routing head is a position lookup</h2>
+    <p class="slide-kicker">4 · Routing</p>
+    <h2>Attention as position lookup</h2>
     <div class="hc-grid heat">
       <div>
         <div class="hc-controls" data-hc="heads"></div>
@@ -162,44 +171,46 @@
         <div class="eq-row" data-step="3"><span>\(\dfrac{q_i^{\top} k_j}{\sqrt{P}} = \mathrm{GAP} \cdot \mathbb{1}[j = \mathrm{tgt}(i)], \quad C = \mathrm{GAP}\sqrt{P}\)</span></div>
         <div class="eq-row" data-step="4"><span>\(\text{leak} \le (T{-}1)\, e^{-\mathrm{GAP}} \le \dfrac{2(n+3)}{(8(n+3))^{3}}\)</span></div>
         <ul>
-          <li data-step="4">\(\mathrm{GAP} = \max\{16,\ 3 \log 8(n{+}3)\}\), so the softmax is one-hot up to \(e^{-16} \approx 10^{-7}\) for every \(n\).</li>
-          <li data-step="5">\(W^{V}_h\) then copies one slot into another, e.g. \(W^{V}_0[\mathrm{QRY}, \mathrm{TL}] = I_A\). A list of targets gives a uniform average.</li>
+          <li data-step="4">\(\mathrm{GAP} = \max\{16,\ 3 \log 8(n{+}3)\} \;\Rightarrow\; \text{weight off target} \le e^{-16} \approx 10^{-7}\)</li>
+          <li data-step="5">Copy: \(W^{V}_0[\mathrm{QRY}, \mathrm{TL}] = I_A\)</li>
+          <li data-step="5">Several targets \(\Rightarrow\) uniform average</li>
         </ul>
       </div>
     </div>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">5 · Block 0, shared by both programs</p>
-    <h2>Mark every letter that equals the query</h2>
+    <p class="slide-kicker">5 · Block 0 (shared)</p>
+    <h2>Match marks \([w_t = q]\)</h2>
     <div class="math">\[
       x_{\mathrm{QRY}} \leftarrow x_{\mathrm{TL}}^{(\text{row } 1)} = e_q, \qquad
-      x_{\mathrm{MATCH}} \mathrel{+}= 2\sum_{a=1}^{A} \mathrm{ReLU}\big(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - 1.5\big) = [w_t = q]
+      x_{\mathrm{MATCH}} \mathrel{+}= 2\sum_{a=1}^{A} \mathrm{ReLU}\big(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - \tfrac32\big) = [w_t = q]
     \]</div>
     <div class="fig" style="max-width:46rem" data-hc="fig5"></div>
     <ul>
-      <li data-step="3">Uses \(A\) of the \(F\) hidden units: row \(a\) of \(W_{\mathrm{in}} \in \mathbb{R}^{F \times W}\) has two 1s (at \(\mathrm{TL}_a, \mathrm{QRY}_a\)), \(b_a = -1.5\), and \(W_{\mathrm{out}}[\mathrm{MATCH}, a] = 2\).</li>
+      <li data-step="3">\(A\) units: \(W_{\mathrm{in}}[a, \mathrm{TL}_a] = W_{\mathrm{in}}[a, \mathrm{QRY}_a] = 1,\ \ b_a = -\tfrac32,\ \ W_{\mathrm{out}}[\mathrm{MATCH}, a] = 2\)</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">6 · Block 1, process program</p>
-    <h2>One update per emitted state</h2>
+    <p class="slide-kicker">6 · Block 1 · process</p>
+    <h2>One update per state</h2>
     <div class="hc-controls" data-hc="ctl6"></div>
-    <div class="fig" style="max-width:50rem" data-hc="fig6"></div>
+    <div class="fig" style="max-width:48rem" data-hc="fig6"></div>
     <div class="math" data-step="3">\[
       u^{0}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - \tfrac12) \to \mathrm{OUT}_j,
       \;\;
       u^{1}_j = \mathrm{ReLU}(x_{\mathrm{PREV}_j} + x_{\mathrm{MT}} - \tfrac32) \to \mathrm{OUT}_{(j+1) \bmod m}
     \]</div>
     <ul>
-      <li data-step="4">Exactly one of the \(2m\) units fires, at \(0.5\), and \(W_{\mathrm{out}} = 2\) makes \(x_{\mathrm{OUT}} = e_{s_t}\). Each emitted state needs one mark and one previous value.</li>
+      <li data-step="4">One unit fires at \(\tfrac12\); \(W_{\mathrm{out}} = 2 \Rightarrow x_{\mathrm{OUT}} = e_{s_t}\)</li>
+      <li data-step="4">Per state: one mark + \(s_{t-1}\)</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">7 · Block 1, outcome program</p>
-    <h2>Read all \(n\) marks at the colon</h2>
+    <p class="slide-kicker">7 · Block 1 · outcome</p>
+    <h2>All \(n\) marks at the colon</h2>
     <div class="hc-controls" data-hc="ctl7"></div>
     <div class="fig" style="max-width:45rem" data-hc="fig7"></div>
     <div class="math" data-step="3">\[
@@ -207,13 +218,14 @@
       \beta_{c'}(x) = r(x{-}c'{+}1) - 2r(x{-}c') + r(x{-}c'{-}1) = \mathbb{1}[x = c']
     \]</div>
     <ul>
-      <li data-step="4">Unit input \(x = x_{\mathrm{CNT}} + (n{+}2)(x_{\mathrm{S0}_j} - 1)\): groups with \(j \ne s_0\) sit below \(-1\) and stay off. All \(3m(n{+}1) = 63\) units are used.</li>
+      <li data-step="4">Gate: \(x = x_{\mathrm{CNT}} + (n{+}2)(x_{\mathrm{S0}_j} - 1)\); \(\ j \ne s_0 \Rightarrow x \le -2\), off</li>
+      <li data-step="4">\(3m(n{+}1) = 63\) units, all used</li>
     </ul>
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">8 · Try it</p>
-    <h2>Run both programs on your own word</h2>
+    <p class="slide-kicker">8 · Playground</p>
+    <h2>Run both programs</h2>
     <div class="hc-controls" data-hc="ctl8"></div>
     <div class="hc-grid play">
       <div>
@@ -225,20 +237,22 @@
         <table class="slide-table compact">
           <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
           <tbody>
-            <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
-            <tr><td>Block-1 MLP units</td><td>\(2m = 6\)</td><td>\(3m(n{+}1) = 63\)</td></tr>
-            <tr><td>Marks read per output</td><td>1</td><td>\(n\)</td></tr>
+            <tr><td>Block-1 heads</td><td>3</td><td>2</td></tr>
+            <tr><td>Block-1 units</td><td>\(2m = 6\)</td><td>\(3m(n{+}1) = 63\)</td></tr>
+            <tr><td>Marks per output</td><td>1</td><td>\(n\)</td></tr>
             <tr><td>Supervised tokens</td><td>\(n + 3\)</td><td>3</td></tr>
           </tbody>
         </table>
-        <p class="hc-info">Blue cells are positive, red negative; hover a cell for its slot and value.</p>
+        <ul>
+          <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
+        </ul>
       </div>
     </div>
   </section>
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=1" defer></script>
+    <script src="/assets/handcoded-slides.js?v=2" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {

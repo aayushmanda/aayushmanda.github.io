@@ -343,19 +343,16 @@
   const SLOT_FILL = { TL: "#e0e7ff", TV: "#e0e7ff", POS: "#e0e7ff", QRY: "#dcfce7", MATCH: "#dcfce7",
                       PREV: "#ffedd5", MT: "#ffedd5", CNT: "#fef9c3", S0: "#fef9c3", OUT: "#fde2e2" };
   const SLOT_INFO = {
-    TL: ["A", "one-hot of the letter on this row", "E_tok", "block-0 head 0 (value) and the block-0 MLP"],
-    TV: ["m", "one-hot of the value on this row (s₀ or an emitted state)", "E_tok",
-         "process heads 0 and 2, outcome head 1"],
-    POS: ["P = 2n + 6", "one-hot of the position", "E_pos = I",
-          "every W^Q and W^K (routing) and the readout rows for ':' and EOS"],
-    QRY: ["A", "copy of the query letter q", "block-0 head 0, from row 1", "the block-0 MLP"],
-    MATCH: ["1", "the mark [wₜ = q]", "the block-0 MLP", "process head 1, outcome head 0"],
-    PREV: ["m", "s₍ₜ₋₁₎ at the row that predicts sₜ", "process head 0", "the process MLP"],
-    MT: ["1", "the mark of wₜ at that same row", "process head 1", "the process MLP"],
-    CNT: ["1", "n × (mean mark) = the count c", "outcome head 0", "the outcome bump units"],
-    S0: ["m", "copy of s₀", "outcome head 1", "the gates of the outcome bump units"],
-    OUT: ["m", "one-hot of the value to emit", "process MLP and head 2; outcome bumps",
-          "the readout, R[A+v, OUT_v] = 20"],
+    TL: ["A", "letter one-hot", "E_{\\mathrm{tok}}", "block 0 (head 0, MLP)"],
+    TV: ["m", "value one-hot", "E_{\\mathrm{tok}}", "proc heads 0, 2; out head 1"],
+    POS: ["P", "position one-hot", "E_{\\mathrm{pos}} = I", "\\text{all } W^Q, W^K;\\ R[{:}], R[\\mathrm{EOS}]"],
+    QRY: ["A", "e_q", "block 0, head 0", "block-0 MLP"],
+    MATCH: ["1", "[w_t = q]", "block-0 MLP", "proc head 1; out head 0"],
+    PREV: ["m", "e_{s_{t-1}}", "proc head 0", "proc MLP"],
+    MT: ["1", "[w_t = q]\\ \\text{at the predicting row}", "proc head 1", "proc MLP"],
+    CNT: ["1", "c = \\textstyle\\sum_t [w_t = q]", "out head 0", "out bumps"],
+    S0: ["m", "e_{s_0}", "out head 1", "out bump gates"],
+    OUT: ["m", "e_{\\text{next value}}", "proc MLP, head 2; out bumps", "R[A{+}v, \\mathrm{OUT}_v] = 20"],
   };
 
   function figSlots() {
@@ -395,29 +392,32 @@
   function slotInfo() {
     const out = el("p", "hc-info");
     if (!state.slot) {
-      out.textContent = "Click any slot to see what it stores, who writes it and who reads it.";
+      out.textContent = "Click a slot.";
       return out;
     }
     const [size, what, writer, reader] = SLOT_INFO[state.slot], s = SLOT[state.slot];
-    const range = s.size > 1 ? `coordinates ${s.start}–${s.start + s.size - 1}` : `coordinate ${s.start}`;
-    out.append(el("b", "", state.slot), ` · ${range}, size ${size}: ${what}. Written by ${writer}. Read by ${reader}.`);
+    const idx = s.size > 1 ? `x_{${s.start}:${s.start + s.size - 1}}` : `x_{${s.start}}`;
+    const name = `\\mathrm{${state.slot}}`;
+    out.textContent = `\\(${name} = ${idx} \\in \\mathbb{R}^{${size}}\\)  ·  ${texOrText(what)}  ·  write: ${texOrText(writer)}  ·  read: ${texOrText(reader)}`;
     return out;
   }
+
+  const texOrText = (s) => (/[\\_^{]/.test(s) ? `\\(${s}\\)` : s);
 
   // ------------------------------------------------------------------ slide 4: attention maps
   const HEADS = {
     b0h0: { prog: "process", b: 0, h: 0, label: "Block 0",
-            note: "Every letter row reads row 1, the query q. Other rows park on row 0." },
+            note: "\\(i \\in [2, n{+}1] \\to 1\\)  (\\(w_t\\) reads \\(q\\))" },
     p1h0: { prog: "process", b: 1, h: 0, label: "Proc h0",
-            note: "Row n+1+t reads its own value s₍ₜ₋₁₎; the SEP row reads s₀ at row 0." },
+            note: "\\(n{+}1{+}t \\to n{+}1{+}t\\)  (\\(s_{t-1}\\));  SEP \\(\\to 0\\)  (\\(s_0\\))" },
     p1h1: { prog: "process", b: 1, h: 1, label: "Proc h1",
-            note: "Row n+1+t reads the mark of wₜ at row t+1: a diagonal shifted by n." },
+            note: "\\(n{+}1{+}t \\to t{+}1\\)  (mark of \\(w_t\\))" },
     p1h2: { prog: "process", b: 1, h: 2, label: "Proc h2",
-            note: "The ':' row reads sₙ, one row back. Other rows park on row 1 (row 0 can only see itself)." },
+            note: "\\({:} \\to 2n{+}2\\)  (\\(s_n\\));  others \\(\\to 1\\)" },
     o1h0: { prog: "outcome", b: 1, h: 0, label: "Out h0",
-            note: "The ':' row spreads weight 1/n over the n letter rows: a uniform average." },
+            note: "\\({:} \\to \\{2, \\dots, n{+}1\\}\\), weight \\(1/n\\) each" },
     o1h1: { prog: "outcome", b: 1, h: 1, label: "Out h1",
-            note: "The ':' row reads s₀ at row 0." },
+            note: "\\({:} \\to 0\\)  (\\(s_0\\))" },
   };
 
   function headControls() {
@@ -455,7 +455,7 @@
     token(svg, qx, y, 70, 42, ids[1], BLUE_HI);
     text(svg, qx + 35, y - 6, "row 1: q", { size: 11, fill: GRAY, anchor: "middle" });
     const g1 = group(svg, 1), g2 = group(svg, 2), g3 = group(svg, 3);
-    text(g1, 470, 22, "head 0: every letter row copies TL of row 1 into QRY, so QRY = e_q",
+    text(g1, 470, 22, "head 0: QRY ← TL(row 1) = e_q",
          { size: 15, fill: ORANGE, weight: 700, anchor: "middle" });
     text(g2, 20, y + 112, "best unit", { size: 15, weight: 700 });
     text(g2, 20, y + 129, "pre-activation", { size: 12, fill: GRAY });
@@ -604,7 +604,7 @@
     }
     const g1 = group(svg, 1);
     for (let i = 2; i < N + 2; i++) arc(g1, cx(ans) - 4, cx(i) + 4, y - 12, 50 + 11 * (N + 2 - i), ORANGE, svg.mk.o, 1.6);
-    text(g1, 20, 44, `head 0: weight ${att[2].toFixed(3)} = 1/${N} on each letter, value n · MATCH → CNT`,
+    text(g1, 20, 44, `head 0: weight ${att[2].toFixed(3)} = 1/${N} per letter → CNT`,
          { size: 15, fill: ORANGE, weight: 700 });
     let ones = 0;
     for (let i = 2; i < N + 2; i++) {
@@ -724,7 +724,14 @@
     for (const name of names) {
       document.querySelectorAll(`[data-hc="${name}"]`).forEach((host) => paint(host, RENDER[name]));
     }
+    const mj = window.MathJax, tex = names.filter((n) => TEX_HOSTS.includes(n));
+    if (!tex.length || !mj) return;
+    const hosts = tex.flatMap((n) => Array.from(document.querySelectorAll(`[data-hc="${n}"]`)));
+    const ready = mj.startup && mj.startup.promise ? mj.startup.promise : Promise.resolve();
+    ready.then(() => mj.typesetPromise && mj.typesetPromise(hosts)).catch(() => {});
   }
+
+  const TEX_HOSTS = ["slotinfo", "fig4"];
 
   function renderAll() {
     compute();
