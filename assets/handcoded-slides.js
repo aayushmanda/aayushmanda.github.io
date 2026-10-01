@@ -894,6 +894,7 @@
     let j;
     if (f) j = f.j;
     else if (st.kind === "a") j = argmax(hd.a[i]);
+    else if (st.kind === "pre") j = argmax(result[i]);
     else if (d.layout === "side" && d.mats.length === 3) j = argmaxAbs(d.mats[1].M[i]);
     else j = argmaxAbs(result[i]);
     d.i = i;
