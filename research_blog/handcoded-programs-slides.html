@@ -21,6 +21,7 @@
       .content .slide-table.compact { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0; }
       .content .slide-table.compact th, .content .slide-table.compact td { padding: 0.28rem 0.6rem; }
       .slide .math { font-size: clamp(1.05rem, 1.6vw, 1.35rem); }
+      .slide .math.sm { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0.2rem 0; }
       .slide p, .slide li { margin-top: 0; }
       .hc-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin: 0 0 0.45rem; font-size: 1rem; }
       .hc-controls .lbl { margin-left: 0.4rem; color: #4b5563; font-weight: 700; }
@@ -107,7 +108,28 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">2 · Architecture</p>
+    <p class="slide-kicker">2 · Notation</p>
+    <h2>Symbols used throughout</h2>
+    <table class="slide-table compact">
+      <thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th><th>Default run</th></tr></thead>
+      <tbody>
+        <tr><td>\(A\)</td><td>alphabet size (letters a, b, c, d)</td><td>4</td><td>4</td></tr>
+        <tr><td>\(n\)</td><td>word length = number of steps</td><td>6</td><td>12</td></tr>
+        <tr><td>\(m\)</td><td>modulus: \(s_t \in \{0, \dots, m{-}1\}\)</td><td>3</td><td>2</td></tr>
+        <tr><td>\(q,\ s_0\)</td><td>query letter, start state</td><td>a, 1</td><td>random</td></tr>
+        <tr><td>\(|\mathcal V| = A + m + 3\)</td><td>vocabulary: letters, values, SEP, :, EOS</td><td>10</td><td>9</td></tr>
+        <tr><td>\(P = 2n + 6\)</td><td>positions: prompt \(n{+}3\) + process tail \(n{+}3\)</td><td>18</td><td>30</td></tr>
+        <tr><td>\(T \le P\)</td><td>length of the current row</td><td>\(\le 18\)</td><td>\(\le 30\)</td></tr>
+        <tr><td>\(H\)</td><td>heads per block</td><td>3</td><td>3</td></tr>
+        <tr><td>\(W = 2A + 4m + 2n + 9\)</td><td>residual width (sum of slot sizes)</td><td>41</td><td>49</td></tr>
+        <tr><td>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</td><td>MLP hidden width</td><td>63</td><td>78</td></tr>
+        <tr><td>\(\mathrm{GAP},\ C = \mathrm{GAP}\sqrt{P}\)</td><td>routing margin, query scale</td><td>16</td><td>16</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">3 · Architecture</p>
     <h2>\(L = 2\) blocks, \(H = 3\) heads, no LayerNorm</h2>
     <div class="hc-grid">
       <div>
@@ -142,7 +164,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">3 · Residual stream</p>
+    <p class="slide-kicker">4 · Residual stream</p>
     <h2>Block encoding: named slots</h2>
     <div class="fig" style="max-width:42rem" data-hc="slots"></div>
     <div data-hc="slotinfo"></div>
@@ -158,7 +180,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">4 · Routing</p>
+    <p class="slide-kicker">5 · Routing</p>
     <h2>Attention as position lookup</h2>
     <div class="hc-grid heat">
       <div>
@@ -180,7 +202,7 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">5 · Block 0 (shared)</p>
+    <p class="slide-kicker">6 · Block 0 (shared)</p>
     <h2>Match marks \([w_t = q]\)</h2>
     <div class="math">\[
       x_{\mathrm{QRY}} \leftarrow x_{\mathrm{TL}}^{(\text{row } 1)} = e_q, \qquad
@@ -193,7 +215,43 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">6 · Block 1 · process</p>
+    <p class="slide-kicker">7 · Block 0 · MLP collapse</p>
+    <h2>MLP \(\Rightarrow [w_t = q]\)</h2>
+    <div class="math sm">\[
+      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
+      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
+    \]</div>
+    <div class="math sm" data-step="1">\[
+      \begin{array}{c|cc} W_{\mathrm{in}}[a,:] & \mathrm{TL}_a & \mathrm{QRY}_a \\ \hline u = a & 1 & 1 \end{array}
+      \qquad
+      \begin{array}{c} b \\ \hline -\tfrac32 \end{array}
+      \qquad
+      \begin{array}{c|c} W_{\mathrm{out}}[:,a]^{\top} & \mathrm{MATCH} \\ \hline u = a & 2 \end{array}
+      \qquad a = 1, \dots, A
+    \]</div>
+    <div class="math sm" data-step="2">\[
+      \Delta x_{\mathrm{MATCH}} = 2 \sum_{a=1}^{A} \mathrm{ReLU}\big(x_{\mathrm{TL}_a} + x_{\mathrm{QRY}_a} - \tfrac32\big)
+    \]</div>
+    <div class="hc-grid" data-step="3">
+      <table class="slide-table compact">
+        <thead><tr><th>\(x_{\mathrm{TL}_a}\)</th><th>\(x_{\mathrm{QRY}_a}\)</th><th>pre-act</th><th>\(2 h_a\)</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>1</td><td>\(+\tfrac12\)</td><td>1</td></tr>
+          <tr><td>1</td><td>0</td><td>\(-\tfrac12\)</td><td>0</td></tr>
+          <tr><td>0</td><td>1</td><td>\(-\tfrac12\)</td><td>0</td></tr>
+          <tr><td>0</td><td>0</td><td>\(-\tfrac32\)</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>\(x_{\mathrm{TL}} = e_{w_t}\), \(x_{\mathrm{QRY}} = e_q\)</li>
+        <li>only \(a = w_t = q\) fires</li>
+        <li>\(\Rightarrow \Delta x_{\mathrm{MATCH}} = [w_t = q]\)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">8 · Block 1 · process</p>
     <h2>One update per state</h2>
     <div class="hc-controls" data-hc="ctl6"></div>
     <div class="fig" style="max-width:48rem" data-hc="fig6"></div>
@@ -209,7 +267,42 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">7 · Block 1 · outcome</p>
+    <p class="slide-kicker">9 · Process · MLP collapse</p>
+    <h2>MLP \(\Rightarrow s_t = (s_{t-1} + [w_t = q]) \bmod m\)</h2>
+    <div class="math sm">\[
+      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
+      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
+    \]</div>
+    <div class="math sm" data-step="1">\[
+      \begin{array}{c|cc} W_{\mathrm{in}} & \mathrm{PREV}_j & \mathrm{MT} \\ \hline u^0_j & 1 & -1 \\ u^1_j & 1 & 1 \end{array}
+      \qquad
+      \begin{array}{c} b \\ \hline -\tfrac12 \\ -\tfrac32 \end{array}
+      \qquad
+      \begin{array}{c|cc} W_{\mathrm{out}}^{\top} & \mathrm{OUT}_j & \mathrm{OUT}_{j+1} \\ \hline u^0_j & 2 & 0 \\ u^1_j & 0 & 2 \end{array}
+      \qquad j = 0, \dots, m{-}1
+    \]</div>
+    <div class="math sm" data-step="2">\[
+      \Delta x_{\mathrm{OUT}} = \sum_{j=0}^{m-1} 2\,\mathrm{ReLU}(x_{\mathrm{PREV}_j} - x_{\mathrm{MT}} - \tfrac12)\, e_j
+      + 2\,\mathrm{ReLU}(x_{\mathrm{PREV}_j} + x_{\mathrm{MT}} - \tfrac32)\, e_{(j+1) \bmod m}
+    \]</div>
+    <div class="hc-grid" data-step="3">
+      <table class="slide-table compact">
+        <thead><tr><th>\(x_{\mathrm{PREV}_j}\)</th><th>\(x_{\mathrm{MT}}\)</th><th>\(u^0_j\)</th><th>\(u^1_j\)</th><th>writes</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>0</td><td>\(\mathrm{OUT}_j = 1\)</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td><td>\(\tfrac12\)</td><td>\(\mathrm{OUT}_{j+1} = 1\)</td></tr>
+          <tr><td>0</td><td>0, 1</td><td>0</td><td>0</td><td>nothing</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>\(x_{\mathrm{PREV}} = e_{s_{t-1}}\), \(x_{\mathrm{MT}} = [w_t = q]\)</li>
+        <li>\(\Rightarrow \Delta x_{\mathrm{OUT}} = e_{(s_{t-1} + [w_t = q]) \bmod m} = e_{s_t}\)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">10 · Block 1 · outcome</p>
     <h2>All \(n\) marks at the colon</h2>
     <div class="hc-controls" data-hc="ctl7"></div>
     <div class="fig" style="max-width:45rem" data-hc="fig7"></div>
@@ -224,7 +317,45 @@
   </section>
 
   <section class="slide">
-    <p class="slide-kicker">8 · Playground</p>
+    <p class="slide-kicker">11 · Outcome · MLP collapse</p>
+    <h2>MLP \(\Rightarrow s_n = (s_0 + c) \bmod m\)</h2>
+    <div class="math sm">\[
+      h = \mathrm{ReLU}(W_{\mathrm{in}}\, x + b) \in \mathbb{R}^{F}, \qquad
+      \Delta x = W_{\mathrm{out}}\, h = \sum_{u} h_u\, W_{\mathrm{out}}[:, u] \in \mathbb{R}^{W}
+    \]</div>
+    <div class="math sm" data-step="1">\[
+      \begin{array}{c|cc} W_{\mathrm{in}} & \mathrm{CNT} & \mathrm{S0}_j \\ \hline u_{j,c,k} & 1 & n{+}2 \end{array}
+      \qquad
+      \begin{array}{c} b \\ \hline k - c - (n{+}2) \end{array}
+      \qquad
+      \begin{array}{c|c} W_{\mathrm{out}}^{\top} & \mathrm{OUT}_{(j+c) \bmod m} \\ \hline u_{j,c,k} & \alpha_k \end{array}
+      \qquad (\alpha_{+1}, \alpha_0, \alpha_{-1}) = (1, -2, 1)
+    \]</div>
+    <div class="math sm" data-step="2">\[
+      \begin{gathered}
+      z_{j,c,k} = (x_{\mathrm{CNT}} - c + k) + (n{+}2)(x_{\mathrm{S0}_j} - 1) \\
+      \Delta x_{\mathrm{OUT}} = \sum_{j < m,\ c \le n} \big[ r(z_{j,c,+1}) - 2 r(z_{j,c,0}) + r(z_{j,c,-1}) \big]\, e_{(j+c) \bmod m}
+      \end{gathered}
+    \]</div>
+    <div class="hc-grid" data-step="3">
+      <table class="slide-table compact">
+        <thead><tr><th>\(x_{\mathrm{CNT}}\)</th><th>\(r(x{-}c{+}1)\)</th><th>\(r(x{-}c)\)</th><th>\(r(x{-}c{-}1)\)</th><th>\(\beta_c\)</th></tr></thead>
+        <tbody>
+          <tr><td>\(\le c{-}1\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>\(c\)</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+          <tr><td>\(c{+}d,\ d \ge 1\)</td><td>\(d{+}1\)</td><td>\(d\)</td><td>\(d{-}1\)</td><td>0</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>\(j \ne s_0\): \(x_{\mathrm{S0}_j} = 0 \Rightarrow z \lt 0\), off</li>
+        <li>\(j = s_0\): bracket \(= \beta_c(x_{\mathrm{CNT}}) = \mathbb{1}[x_{\mathrm{CNT}} = c]\)</li>
+        <li>\(\Rightarrow \Delta x_{\mathrm{OUT}} = e_{(s_0 + c) \bmod m} = e_{s_n}\)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide">
+    <p class="slide-kicker">12 · Playground</p>
     <h2>Run both programs</h2>
     <div class="hc-controls" data-hc="ctl8"></div>
     <div class="hc-grid play">
@@ -252,7 +383,7 @@
 </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=2" defer></script>
+    <script src="/assets/handcoded-slides.js?v=3" defer></script>
     <script src="/assets/slides.js?v=8" defer></script>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
