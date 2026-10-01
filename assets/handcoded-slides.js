@@ -907,20 +907,16 @@
   }
 
   // ---- drawing
-  const maxAbs = (mat) => {
-    let m = 0;
-    for (const r of mat) for (const v of r) if (isFinite(v)) m = Math.max(m, Math.abs(v));
-    return m || 1;
-  };
-  const cellFill = (v, m) => (v === -Infinity ? "#e5e7eb" : Math.abs(v) < 1e-6 ? null
-    : mix(v > 0 ? BLUE : RED, 0.2 + 0.8 * Math.min(1, Math.abs(v) / m)));
+  // Full color at |v| >= 1, lighter below; leaks under 1e-4 are drawn white (click shows the exact value).
+  const cellFill = (v) => (v === -Infinity ? "#e5e7eb" : Math.abs(v) < 1e-4 ? null
+    : mix(v > 0 ? BLUE : RED, 0.3 + 0.7 * Math.min(1, Math.abs(v))));
 
   function drawMat(g, spec, x, y, o = {}) {
-    const mat = spec.M, R = mat.length, Cn = mat[0].length, m = maxAbs(mat);
+    const mat = spec.M, R = mat.length, Cn = mat[0].length;
     box(g, x, y, Cn * CS, R * CS, { rx: 0, fill: "#ffffff", stroke: "#94a3b8", sw: 0.8 });
     for (let r = 0; r < R; r++) {
       for (let c = 0; c < Cn; c++) {
-        const fill = cellFill(mat[r][c], m);
+        const fill = cellFill(mat[r][c]);
         if (!fill && !o.pick) continue;
         const rect = node("rect", { x: x + c * CS, y: y + r * CS, width: CS, height: CS,
                                     fill: fill || "#ffffff", "fill-opacity": fill ? 1 : 0 }, g);
@@ -1032,7 +1028,32 @@
     return svg;
   }
 
+  // X + ΔX = X: three matrices with the same columns, stacked so each stays large.
+  function stackSvg(d) {
+    const mats = d.mats, r = mats[0].M.length, c = mats[0].M[0].length, lm = 64, tm = 50, gap = 30;
+    const ys = mats.map((_, n) => tm + n * (r * CS + gap)), width = lm + c * CS + 14;
+    const svg = newSvg(width, ys[ys.length - 1] + r * CS + 10, "mx");
+    const rowMs = Math.round(Math.min(90, 1400 / r));
+    animate(svg, r, rowMs);
+    axisLabels(svg, mats[0], "top", lm, tm, d.ids);
+    mats.forEach((m, n) => {
+      drawMat(svg, m, lm, ys[n], { pick: true, rowDelay: n === mats.length - 1 ? rowMs : 0 });
+      axisLabels(svg, m, "left", ys[n], lm, d.ids);
+      svgName(svg, lm - 6, ys[n] - 6, m.nm);
+      if (n) text(svg, lm + (c * CS) / 2, ys[n] - 9, d.ops[n - 1], { size: 18, weight: 700, anchor: "middle", fill: ORANGE });
+    });
+    const i = d.i, j = d.j, g = node("g", { class: "mx-late", "pointer-events": "none" }, svg);
+    for (const y of ys) {
+      node("rect", { x: lm, y: y + i * CS, width: c * CS, height: CS, fill: ORANGE, "fill-opacity": 0.1, stroke: ORANGE, "stroke-width": 1.2 }, g);
+      node("rect", { x: lm + j * CS, y: y + i * CS, width: CS, height: CS, fill: "none", stroke: INK, "stroke-width": 2.4 }, g);
+    }
+    node("rect", { x: lm, y: ys[ys.length - 1], width: c * CS, height: CS, fill: ORANGE, "fill-opacity": 0.22,
+                   class: "mx-sweep", "pointer-events": "none" }, svg);
+    return svg;
+  }
+
   function sideSvg(d) {
+    if (d.mats.length === 3) return stackSvg(d);
     const mats = d.mats, r = mats[0].M.length, lm = 64, tm = 50, gap = 64;
     let x = lm;
     const xs = mats.map((m) => { const x0 = x; x += m.M[0].length * CS + gap; return x0; });
@@ -1174,7 +1195,7 @@
     for (const [cls, html] of parts) { const p = el("p", cls); p.innerHTML = html; wrap.append(p); }
     const foc = el("div", "mx-focus");
     foc.innerHTML = focusHtml(d);
-    wrap.append(foc, el("p", "mx-hint", "Click any cell to inspect it · ← → step through"));
+    wrap.append(foc, el("p", "mx-hint", "Blue > 0, red < 0, full color at |v| ≥ 1, white below 10⁻⁴. Click any cell to inspect it · ← → step through."));
     return wrap;
   }
 
