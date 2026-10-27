@@ -3,9 +3,17 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hand-Coded Process and Outcome Programs - Aayushman</title>
-    <meta name="description" content="Interactive slides on two exact programs for letter counting written into the same two-block Transformer: tensor shapes, the residual-stream layout, and the weights of each block, computed live in the browser.">
-    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>Hand-Coded Process and Outcome Programs in One Transformer - Aayushman</title>
+    <meta name="description" content="An interactive walkthrough of two exact hand-coded programs for modular letter counting written into the exact same two-block causal Transformer: token and slot encodings, attention pointers, ReLU gates and triangle bumps, and live matrix-by-matrix execution.">
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Hand-Coded Process and Outcome Programs in One Transformer">
+    <meta property="og:description" content="Two exact programs for modular letter counting—one step-by-step, one all-at-once—written into the exact same two-block Transformer and computed live in the browser.">
+    <meta property="og:url" content="https://aayushmanda.github.io/research_blog/handcoded-programs-slides.html">
+    <meta property="og:image" content="https://aayushmanda.github.io/image/profile.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Hand-Coded Process and Outcome Programs in One Transformer">
+    <meta name="twitter:description" content="Two exact programs for modular letter counting—one step-by-step, one all-at-once—written into the exact same two-block Transformer and computed live in the browser.">
+    <meta name="twitter:image" content="https://aayushmanda.github.io/image/profile.jpg">
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
     <script>
       try {
@@ -18,98 +26,374 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css?v=35">
     <style>
-      .content .slide-table.compact { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0; }
-      .content .slide-table.compact th, .content .slide-table.compact td { padding: 0.28rem 0.6rem; }
-      .slide .math { font-size: clamp(1.05rem, 1.6vw, 1.35rem); }
-      .slide .math.sm { font-size: clamp(0.95rem, 1.35vw, 1.15rem); margin: 0.2rem 0; }
-      .slide p, .slide li { margin-top: 0; }
-      .hc-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; margin: 0 0 0.45rem; font-size: 1rem; }
-      .hc-controls .lbl { margin-left: 0.4rem; color: #4b5563; font-weight: 700; }
-      .hc-controls .lbl:first-child { margin-left: 0; }
-      .hc-val { min-width: 3.4rem; text-align: center; font-weight: 700; color: #1e3a8a; }
-      .hc-btn { padding: 0.12rem 0.6rem; border: 1px solid #bfdbfe; border-radius: 6px; background: #ffffff; color: #1e3a8a; font: inherit; font-size: 0.95rem; cursor: pointer; }
-      .hc-btn:hover { background: #eff6ff; }
-      .hc-btn.on { border-color: #1d4ed8; background: #1d4ed8; color: #ffffff; }
-      .hc-btn.letter { min-width: 2rem; font-family: ui-monospace, Menlo, monospace; }
-      .hc-info { margin: 0.1rem 0 0.4rem; color: #374151; font-size: clamp(0.95rem, 1.3vw, 1.1rem); }
-      .hc-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0.6rem 1.6rem; align-items: start; }
-      .hc-grid.heat { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
-      .hc-grid.play { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
-      .hc-heat { max-width: 22.5rem; margin: 0; }
-      .hc-heat.wide { max-width: none; }
-      .hc-grid.play .hc-heat { max-width: 34rem; }
-      .hc-grid.net { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
-      .hc-grid.fill { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
-      .hc-grid.fill .hc-heat { max-width: 36rem; }
-      .hc-given td { background: #eef2ff; }
-      .hc-grid li { font-size: clamp(1rem, 1.4vw, 1.2rem); }
-      .hc-grid.net .eq-row { flex-wrap: nowrap; font-size: clamp(0.95rem, 1.3vw, 1.15rem); }
-      .eq-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.8rem; margin: 0 0 0.25rem; padding: 0.15rem 0.5rem; border-radius: 6px; font-size: clamp(1rem, 1.45vw, 1.25rem); }
-      .eq-row .shape { color: #6b7280; font-size: 0.85em; white-space: nowrap; }
-      .slide .eq-row.is-current, .slide li[data-step].is-current, .slide .math[data-step].is-current { background: #f5f9ff; border-radius: 6px; }
-      .hc-slots text { pointer-events: none; }
-      .draw { stroke-dasharray: 1; }
-      .slide [data-step].is-shown .draw { animation: hc-draw 0.8s ease-out both; }
-      @keyframes hc-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
-      @media (prefers-reduced-motion: reduce) { .slide [data-step].is-shown .draw { animation: none; } }
-      .hc-outputs { margin: 0 0 0.6rem; }
-      .hc-out-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem; margin: 0 0 0.35rem; }
-      .hc-out-name { width: 4.8rem; color: #1d4ed8; font-size: 1rem; font-weight: 700; }
-      .hc-chip { min-width: 1.6rem; padding: 0.05rem 0.35rem; border: 1px solid #c2410c; border-radius: 5px; background: #ffedd5; text-align: center; font-size: 0.95rem; }
-      .hc-chip.val { color: #1d4ed8; }
-      .hc-ok, .hc-bad { margin-left: 0.4rem; font-size: 0.95rem; font-weight: 700; }
-      .hc-ok { color: #15803d; }
-      .hc-bad { color: #b91c1c; }
-      .slide .idea, .slide .gen { margin: 0 0 0.6rem; padding: 0.45rem 0.85rem; border-radius: 0 8px 8px 0; font-size: clamp(1.02rem, 1.5vw, 1.25rem); line-height: 1.45; }
-      .slide .idea { border-left: 4px solid #c2410c; background: #fff7ed; color: #1f2937; }
-      .slide .gen { border-left: 4px solid #1d4ed8; background: #eff6ff; color: #1f2937; }
-      .tag-ex, .tag-gen { display: inline-block; margin-right: 0.45rem; padding: 0 0.4rem; border-radius: 4px; color: #ffffff; font-size: 0.72em; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; vertical-align: 0.12em; }
-      .tag-ex { background: #c2410c; }
-      .tag-gen { background: #1d4ed8; }
-      .slide .hc-sub { color: #4b5563; font-size: clamp(1rem, 1.4vw, 1.2rem); }
-      .slide .tool { margin: 0 0 0.55rem; padding: 0.4rem 0.85rem; border-left: 4px solid #64748b; border-radius: 0 8px 8px 0; background: #f8fafc; }
-      .slide .tool p { margin: 0 0 0.2rem; font-size: clamp(1.02rem, 1.5vw, 1.25rem); }
-      .slide .tool .math { margin: 0.1rem 0; }
-      .content .slide-table.glossary td { text-align: left; }
-      .content .slide-table.glossary td:nth-child(odd) { width: 1%; padding-right: 1.2rem; font-weight: 700; color: #1e3a8a; }
-      .content .slide-table.trace td, .content .slide-table.trace th { text-align: center; }
-      .content .slide-table.trace td:first-child, .content .slide-table.trace th:first-child { text-align: left; }
-      .mx-slide { padding-top: 4vh; }
-      .mx-slide h2 { margin-bottom: 0.35rem; font-size: clamp(1.5rem, 2.6vw, 2.1rem); }
-      .slide > .mx-grid { max-width: 78rem; }
-      .slide > .mx-ctl { max-width: 78rem; margin-bottom: 0.35rem; }
-      .slide > .slide-kicker.mx-k, .mx-slide > .slide-kicker, .mx-slide > h2 { max-width: 78rem; }
-      .mx-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(17rem, 1fr); gap: 0.5rem 1.4rem; align-items: start; }
-      .mx-svg svg { display: block; width: 100%; height: auto; max-height: 64vh; }
-      .mx-svg svg text { pointer-events: none; }
-      .mx-svg svg rect[data-i] { cursor: pointer; }
-      .mx-break { flex-basis: 100%; height: 0; }
-      .mx-ctl .hc-btn { font-size: 0.85rem; padding: 0.08rem 0.45rem; }
-      .slide .mx-stage { margin: 0 0 0.15rem; color: #1e3a8a; font-size: 1rem; font-weight: 700; letter-spacing: 0.02em; }
-      .slide .mx-formula { margin: 0 0 0.4rem; font-size: clamp(1.15rem, 1.7vw, 1.45rem); }
-      .mx-shape { display: block; color: #6b7280; font-size: 0.72em; }
-      .slide .mx-why { margin: 0 0 0.5rem; font-size: clamp(0.92rem, 1.25vw, 1.08rem); line-height: 1.42; }
-      .mx-focus { padding: 0.4rem 0.7rem; border-left: 4px solid #c2410c; border-radius: 0 8px 8px 0; background: #fff7ed; }
-      .slide .mx-focus p { margin: 0 0 0.2rem; font-size: 0.92rem; line-height: 1.35; }
-      .slide .mx-focus .mx-fh { font-weight: 700; }
-      .slide .mx-focus .mx-more { color: #6b7280; }
-      .content table.mx-terms { width: auto; margin: 0.1rem 0 0.3rem; border-collapse: collapse; background: transparent; font-size: 0.88rem; font-variant-numeric: tabular-nums; }
-      .content table.mx-terms th, .content table.mx-terms td { padding: 0.05rem 0.35rem; border: none; color: #1f2937; text-align: right; font-weight: 400; }
-      .content table.mx-terms th { color: #6b7280; }
-      .content table.mx-terms td:first-child, .content table.mx-terms th:first-child { padding-left: 0; text-align: left; }
-      .slide .mx-hint { margin: 0.4rem 0 0; color: #6b7280; font-size: 0.85rem; }
-      .mx-passinfo { min-width: 0; color: #15803d; }
-      .mx-anim .mx-in { animation: mx-in 0.25s ease-out both; animation-delay: var(--d, 0ms); }
-      .mx-anim .mx-late { animation: mx-in 0.35s ease-out both; animation-delay: calc(var(--dur) + 150ms); }
-      .mx-anim .mx-sweep { animation: mx-sweep var(--dur) steps(var(--rows), end) both, mx-out 0.3s var(--dur) forwards; }
-      .mx-still .mx-sweep { display: none; }
-      @keyframes mx-in { from { opacity: 0; } to { opacity: 1; } }
-      @keyframes mx-sweep { from { transform: translateY(0); } to { transform: translateY(var(--sweep)); } }
-      @keyframes mx-out { to { opacity: 0; } }
-      @media (prefers-reduced-motion: reduce) { .mx-anim .mx-in, .mx-anim .mx-late { animation: none; } .mx-sweep { display: none; } }
-      .gen-svg svg { max-height: 52vh; }
-      .gen-info { margin-top: 0.4rem; }
-      .slide .gen-info p { margin: 0 0 0.35rem; font-size: clamp(1rem, 1.45vw, 1.22rem); }
+      /* Allow wide interactive cards to span the full .page container (920px) while prose stays 42rem */
+      .hc-wide {
+        width: min(100vw - 2.5rem, 920px);
+        margin: 1.5rem 0 2rem;
+      }
+      @media (max-width: 720px) {
+        .hc-wide {
+          width: 100%;
+        }
+      }
+      .hc-card {
+        padding: 1rem 1.15rem 0.9rem;
+        border: 1px solid #dbeafe;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #1f2937;
+        font-family: var(--font-serif);
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+      }
+      .hc-card .fig {
+        margin: 0.25rem 0 0.45rem;
+        max-width: 100%;
+      }
+      .hc-card-label {
+        margin: 0 0 0.55rem;
+        color: #1e3a8a;
+        font-family: var(--font-sans);
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .hc-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 0.5rem;
+        margin: 0 0 0.65rem;
+        font-family: var(--font-sans);
+        font-size: 0.92rem;
+      }
+      .hc-controls .lbl {
+        margin-left: 0.4rem;
+        color: #4b5563;
+        font-weight: 700;
+      }
+      .hc-controls .lbl:first-child {
+        margin-left: 0;
+      }
+      .hc-val {
+        min-width: 3.4rem;
+        text-align: center;
+        font-weight: 700;
+        color: #1e3a8a;
+      }
+      .hc-btn {
+        padding: 0.18rem 0.62rem;
+        border: 1px solid #bfdbfe;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #1e3a8a;
+        font: inherit;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .hc-btn:hover {
+        background: #eff6ff;
+      }
+      .hc-btn.on {
+        border-color: #1d4ed8;
+        background: #1d4ed8;
+        color: #ffffff;
+      }
+      .hc-btn.letter {
+        min-width: 2rem;
+        font-family: ui-monospace, Menlo, monospace;
+      }
+      .hc-info {
+        margin: 0.35rem 0 0.2rem;
+        color: #374151;
+        font-family: var(--font-sans);
+        font-size: 0.92rem;
+        line-height: 1.45;
+      }
+      .hc-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+        gap: 0.9rem 1.4rem;
+        align-items: start;
+      }
+      .hc-grid.heat {
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+      }
+      .hc-grid.play {
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      }
+      .hc-grid.fill {
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      }
+      @media (max-width: 780px) {
+        .hc-grid,
+        .hc-grid.heat,
+        .hc-grid.play,
+        .hc-grid.fill,
+        .mx-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .hc-heat {
+        max-width: 24rem;
+        margin: 0;
+      }
+      .hc-heat.wide {
+        max-width: none;
+      }
+      .hc-grid.play .hc-heat,
+      .hc-grid.fill .hc-heat {
+        max-width: 100%;
+      }
+      .hc-slots text {
+        pointer-events: none;
+      }
+      .hc-outputs {
+        margin: 0 0 0.75rem;
+      }
+      .hc-out-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.28rem;
+        margin: 0 0 0.4rem;
+        font-family: var(--font-sans);
+      }
+      .hc-out-name {
+        width: 4.8rem;
+        color: #1d4ed8;
+        font-size: 0.95rem;
+        font-weight: 700;
+      }
+      .hc-chip {
+        min-width: 1.6rem;
+        padding: 0.08rem 0.38rem;
+        border: 1px solid #c2410c;
+        border-radius: 5px;
+        background: #ffedd5;
+        color: #1f2937;
+        text-align: center;
+        font-size: 0.9rem;
+      }
+      .hc-chip.val {
+        color: #1d4ed8;
+        font-weight: 600;
+      }
+      .hc-ok,
+      .hc-bad {
+        margin-left: 0.4rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+      .hc-ok {
+        color: #15803d;
+      }
+      .hc-bad {
+        color: #b91c1c;
+      }
+      .idea,
+      .gen {
+        margin: 0 0 1.25rem;
+        padding: 0.65rem 0.95rem;
+        border-radius: 0 8px 8px 0;
+        font-size: 1.05rem;
+        line-height: 1.5;
+      }
+      .idea {
+        border-left: 4px solid #c2410c;
+        background: #fff7ed;
+        color: #1f2937;
+      }
+      .gen {
+        border-left: 4px solid #1d4ed8;
+        background: #eff6ff;
+        color: #1f2937;
+      }
+      .tag-ex,
+      .tag-gen {
+        display: inline-block;
+        margin-right: 0.45rem;
+        padding: 0.05rem 0.42rem;
+        border-radius: 4px;
+        color: #ffffff;
+        font-family: var(--font-sans);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        vertical-align: 0.12em;
+      }
+      .tag-ex {
+        background: #c2410c;
+      }
+      .tag-gen {
+        background: #1d4ed8;
+      }
+      .eq-block {
+        margin: 0 0 1.2rem;
+        padding: 0.65rem 0.9rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--bg-elevated);
+      }
+      .eq-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.6rem;
+        margin: 0 0 0.35rem;
+        padding: 0.15rem 0.25rem;
+        font-size: 1.08rem;
+      }
+      .eq-row:last-child {
+        margin-bottom: 0;
+      }
+      .eq-row .shape {
+        color: var(--fg-muted);
+        font-family: var(--font-sans);
+        font-size: 0.86rem;
+      }
+      .mx-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.55fr) minmax(17rem, 1fr);
+        gap: 0.75rem 1.35rem;
+        align-items: start;
+      }
+      .mx-svg svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-height: 62vh;
+      }
+      .mx-svg svg text {
+        pointer-events: none;
+      }
+      .mx-svg svg rect[data-i] {
+        cursor: pointer;
+      }
+      .mx-break {
+        flex-basis: 100%;
+        height: 0;
+      }
+      .mx-ctl .hc-btn {
+        font-size: 0.82rem;
+        padding: 0.12rem 0.48rem;
+      }
+      .mx-stage {
+        margin: 0 0 0.2rem;
+        color: #1e3a8a;
+        font-family: var(--font-sans);
+        font-size: 0.92rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .mx-formula {
+        margin: 0 0 0.45rem;
+        color: #111827;
+        font-size: 1.15rem;
+      }
+      .mx-shape {
+        display: block;
+        color: #6b7280;
+        font-family: var(--font-sans);
+        font-size: 0.78rem;
+      }
+      .mx-why {
+        margin: 0 0 0.55rem;
+        color: #1f2937;
+        font-size: 0.98rem;
+        line-height: 1.45;
+      }
+      .mx-focus {
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid #c2410c;
+        border-radius: 0 8px 8px 0;
+        background: #fff7ed;
+        color: #1f2937;
+      }
+      .mx-focus p {
+        margin: 0 0 0.22rem;
+        font-family: var(--font-sans);
+        font-size: 0.88rem;
+        line-height: 1.38;
+      }
+      .mx-focus .mx-fh {
+        font-weight: 700;
+      }
+      .mx-focus .mx-more {
+        color: #6b7280;
+      }
+      .content table.mx-terms {
+        width: auto;
+        margin: 0.15rem 0 0.3rem;
+        border-collapse: collapse;
+        background: transparent;
+        font-size: 0.84rem;
+        font-variant-numeric: tabular-nums;
+      }
+      .content table.mx-terms th,
+      .content table.mx-terms td {
+        padding: 0.08rem 0.35rem;
+        border: none;
+        color: #1f2937;
+        text-align: right;
+        font-weight: 400;
+      }
+      .content table.mx-terms th {
+        color: #6b7280;
+      }
+      .content table.mx-terms td:first-child,
+      .content table.mx-terms th:first-child {
+        padding-left: 0;
+        text-align: left;
+      }
+      .mx-hint {
+        margin: 0.45rem 0 0;
+        color: #4b5563;
+        font-family: var(--font-sans);
+        font-size: 0.84rem;
+        line-height: 1.4;
+      }
+      .mx-passinfo {
+        min-width: 0;
+        color: #15803d;
+        text-align: left;
+      }
+      .mx-anim .mx-in {
+        animation: mx-in 0.25s ease-out both;
+        animation-delay: var(--d, 0ms);
+      }
+      .mx-anim .mx-late {
+        animation: mx-in 0.35s ease-out both;
+        animation-delay: calc(var(--dur) + 150ms);
+      }
+      .mx-still .mx-sweep {
+        display: none;
+      }
+      @keyframes mx-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .gen-svg svg {
+        max-height: 48vh;
+      }
+      .gen-info {
+        margin-top: 0.5rem;
+      }
+      .gen-info p {
+        margin: 0 0 0.38rem;
+        color: #1f2937;
+        font-family: var(--font-sans);
+        font-size: 0.94rem;
+        line-height: 1.45;
+      }
+      .reg {
+        font-family: var(--font-sans);
+        font-size: 0.88em;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+      }
     </style>
     <script>
       window.MathJax = {
@@ -117,8 +401,7 @@
           inlineMath: [["\\(", "\\)"], ["$", "$"]],
           displayMath: [["\\[", "\\]"], ["$$", "$$"]]
         },
-        options: { skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"] },
-        startup: { typeset: false }
+        options: { skipHtmlTags: ["script", "noscript", "style", "textarea", "pre", "code"] }
       };
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -137,380 +420,520 @@
     </nav>
 
     <main class="page">
-      <h1 class="page-title tight">Hand-Coded Process and Outcome Programs</h1>
+      <div class="tag-row">
+        <span class="tag">Transformers</span>
+        <span class="tag">Process Supervision</span>
+        <span class="tag">Mechanistic Interpretability</span>
+      </div>
+      <h1 class="page-title tight">Hand-Coded Process and Outcome Programs in One Transformer</h1>
+
+      <div class="byline">
+        <img class="byline-avatar" src="/image/profile.jpg" alt="">
+        <div class="byline-info">
+          <p class="byline-name">By <span class="authors">Aayushman</span></p>
+          <p class="byline-sub">October 1, 2026 &middot; IIT Madras &middot; Interactive note &middot; 14 min read</p>
+        </div>
+        <div class="share-row">
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html&amp;text=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html&amp;title=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </div>
+
       <article class="content">
-<div class="deck" data-deck>
-  <div class="deck-bar">
-    <a class="deck-home" href="/" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5 L12 4 L20 10.5"/><path d="M7 10 V20 H17 V10"/></svg></a>
-    <button type="button" data-prev aria-label="Previous slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5 L8 12 L15 19"/></svg></button>
-    <button type="button" data-next aria-label="Next slide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5 L16 12 L9 19"/></svg></button>
-    <span data-count></span>
-  </div>
+        <p class="lead">
+          When we train a small two-block Transformer on modular letter counting, <strong>process supervision</strong> (training the model to write every intermediate state $s_1, \dots, s_n$ before the final answer) reliably learns the task, whereas <strong>outcome supervision</strong> (training it to write only the final answer $s_n$) stays stuck at chance. Could that failure simply be expressive&mdash;that a two-block network without intermediate tokens cannot represent the outcome solution?
+        </p>
 
-  <section class="slide slide-title">
-    <p class="slide-kicker">Process vs outcome supervision</p>
-    <h2>Two hand-written programs, one Transformer</h2>
-    <p>Letter counting: we write the exact weights for a <strong>step-by-step</strong> solution and an <strong>all-at-once</strong> solution, in the same small network.</p>
-    <p class="hc-sub">Running example on every slide: \(s_0 = 1,\ q = \mathtt{a},\ \text{word} = \mathtt{b\,a\,d\,a}\). Only basic linear algebra is needed. Every figure is computed live from the weights.</p>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">1 · Task</p>
-    <h2>Count the query letter, mod \(m\)</h2>
-    <div class="idea"><span class="tag-ex">Example</span> \(m = 2\): start at \(s_0 = 1\) and add 1 at every <b>a</b> in b a d a, wrapping around at 2. The answer is \(s_4 = 1\).</div>
-    <table class="slide-table compact trace">
-      <thead><tr><th>step \(t\)</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
-      <tbody>
-        <tr><td>letter \(w_t\)</td><td></td><td>b</td><td>a</td><td>d</td><td>a</td></tr>
-        <tr><td>mark: is it a?</td><td></td><td>0</td><td>1</td><td>0</td><td>1</td></tr>
-        <tr><td>state \(s_t\)</td><td>1</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
-      </tbody>
-    </table>
-    <div class="gen" data-step="1"><span class="tag-gen">In general</span> \(s_t = (s_{t-1} + [w_t = q]) \bmod m\), where \([w_t = q]\) is 1 if the letter equals the query and 0 otherwise.</div>
-    <ul>
-      <li data-step="2"><b>Process supervision:</b> the model is trained to write every state \(s_1, \dots, s_4\), then the answer.</li>
-      <li data-step="2"><b>Outcome supervision:</b> the model is trained to write only the answer \(s_4\).</li>
-    </ul>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">2 · The two programs in words</p>
-    <h2>Step by step vs all at once</h2>
-    <div class="fig" style="max-width:48rem" data-hc="fig1"></div>
-    <ul>
-      <li data-step="1"><b>Process</b> (top row): write \(1, 0, 0, 1\). Each new state needs only the previous state and one mark: \(s_4 = (0 + 1) \bmod 2 = 1\).</li>
-      <li data-step="2"><b>Outcome</b> (bottom row): write only the answer. It must count all the marks at once: \(c = 2\), so \((1 + 2) \bmod 2 = 1\).</li>
-      <li data-step="3">Both get the <b>same prompt</b> and the <b>same network</b>. We write the exact weights for each by hand.</li>
-    </ul>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">3 · Toolkit</p>
-    <h2>Three facts from linear algebra</h2>
-    <p class="hc-sub">Every weight in this deck is built from these three facts.</p>
-    <div class="tool" data-step="1">
-      <p><b>1. One-hot vectors.</b> Letter c of a, b, c, d is \(e_{\mathtt c} = (0, 0, 1, 0)\). Dot products test equality: \(e_i \cdot e_j = [i = j]\), i.e. 1 if equal and 0 if not.</p>
-    </div>
-    <div class="tool" data-step="2">
-      <p><b>2. ReLU makes an AND gate.</b> \(\mathrm{ReLU}(x) = \max(0, x)\). For bits \(x, y \in \{0, 1\}\):</p>
-      <div class="math sm">\[ 2\,\mathrm{ReLU}(x + y - 1.5) = \begin{cases} 2 \cdot 0.5 = 1 & x = y = 1 \\ 0 & \text{otherwise (the sum is } \le -0.5) \end{cases} \]</div>
-    </div>
-    <div class="tool" data-step="3">
-      <p><b>3. Softmax with one big score picks one entry.</b> \(\mathrm{softmax}(z)_j = e^{z_j} / \sum_k e^{z_k}\):</p>
-      <div class="math sm">\[ \mathrm{softmax}(16, 0, 0, 0) \approx (0.9999997,\ 10^{-7},\ 10^{-7},\ 10^{-7}), \qquad \mathrm{softmax}(16, 16, 0, 0) \approx (\tfrac12, \tfrac12, 0, 0) \]</div>
-      <p class="hc-sub">One winner gives a lookup of one row. Several tied winners give their average.</p>
-    </div>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">4 · Sizes</p>
-    <h2>Symbols and sizes</h2>
-    <table class="slide-table compact">
-      <thead><tr><th>Symbol</th><th>Meaning</th><th>Example</th><th>Default run</th></tr></thead>
-      <tbody>
-        <tr><td>\(A\)</td><td>number of letters (a, b, c, d)</td><td>4</td><td>4</td></tr>
-        <tr><td>\(n\)</td><td>word length = number of steps</td><td>4</td><td>12</td></tr>
-        <tr><td>\(m\)</td><td>modulus, states are \(0, \dots, m{-}1\)</td><td>2</td><td>2</td></tr>
-        <tr><td>\(q,\ s_0\)</td><td>query letter, start state</td><td>a, 1</td><td>random</td></tr>
-        <tr><td>\(|\mathcal V| = A + m + 3\)</td><td>token types: letters, state values, SEP, :, EOS</td><td>9</td><td>9</td></tr>
-        <tr><td>\(P = 2n + 6\)</td><td>longest row of tokens</td><td>14</td><td>30</td></tr>
-        <tr><td>\(W = 2A + 4m + 2n + 9\)</td><td>length of each token's vector</td><td>33</td><td>49</td></tr>
-        <tr><td>\(F = \max\{A,\ 3m(n{+}1),\ 2n{+}1\}\)</td><td>number of ReLU units per MLP</td><td>30</td><td>78</td></tr>
-      </tbody>
-    </table>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">5 · The network</p>
-    <h2>A table of vectors, updated twice</h2>
-    <div class="idea"><span class="tag-ex">Example</span> The process row has \(T = 14\) tokens, so the state of the network is a \(14 \times 33\) matrix \(X\). Row \(i\) is the vector for token \(i\).</div>
-    <div class="hc-grid net">
-      <div>
-        <div class="eq-row" data-step="1"><span>\(X = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">start: which token + where</span></div>
-        <div class="eq-row" data-step="2"><span>\(S_h = (X W^{Q\top}_h)(X W^{K\top}_h)^{\top} / \sqrt{P}\)</span><span class="shape">how much row \(i\) wants row \(j\)</span></div>
-        <div class="eq-row" data-step="3"><span>\(X \mathrel{+}= \sum_{h} \mathrm{softmax}(S_h)\, X W^{V\top}_h\)</span><span class="shape">attention: copy from other rows</span></div>
-        <div class="eq-row" data-step="4"><span>\(X \mathrel{+}= \mathrm{ReLU}(X W_{\mathrm{in}}^{\top} + b)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">MLP: same function on each row</span></div>
-        <div class="eq-row" data-step="5"><span>\(\mathrm{logits} = X R^{\top}\)</span><span class="shape">readout: score each next token</span></div>
+        <p>
+          To rule out expressivity, we write the exact weights of <em>both</em> solutions by hand into the exact same two-block causal Transformer. Both programs use the same parameter tensors with the exact same shapes; only the numerical values in Block 1 and four readout entries differ. Every diagram, activation table, and matrix product on this page is computed live in your browser by running those exact weights on the running example ($s_0 = 1,\ q = \mathtt{a},\ \text{word} = \mathtt{b\,a\,d\,a}$, modulus $m = 2$).
+        </p>
+
+        <nav class="toc" aria-label="Table of contents">
+          <p class="toc-label">Contents</p>
+          <ol>
+            <li><a href="#sec-task">The Task &amp; Sequence Encoding</a></li>
+            <li><a href="#sec-toolkit">Three Linear-Algebra Primitives</a></li>
+            <li><a href="#sec-network">Network &amp; Residual Slot Encoding</a></li>
+            <li><a href="#sec-block0">Block 0: Finding the Marks</a></li>
+            <li><a href="#sec-process">Block 1 (Process): One Step at a Time</a></li>
+            <li><a href="#sec-outcome">Block 1 (Outcome): Everything at Once</a></li>
+            <li><a href="#sec-inference">Readout, Inference &amp; Attention Maps</a></li>
+            <li><a href="#sec-matrices">Matrix-by-Matrix Walkthroughs</a></li>
+            <li><a href="#sec-playground">Interactive Playground &amp; Summary</a></li>
+          </ol>
+        </nav>
+
+        <h2 id="sec-task">1. The Task and the Sequence Encoding</h2>
+
+        <p>
+          Each prompt consists of an initial state $s_0 \in \{0, \dots, m-1\}$, a query letter $q$ from an alphabet of size $A$, and a word $w_1 \dots w_n$ of length $n$. After reading letter $w_t$, the state increments by $1$ modulo $m$ if $w_t$ matches $q$:
+        </p>
+        <p class="math">
+          \[
+            s_t = (s_{t-1} + b_t) \bmod m, \qquad b_t = \mathbf{1}[w_t = q].
+          \]
+        </p>
+        <p>
+          We call $b_t \in \{0, 1\}$ the <strong>mark</strong> of letter $t$, and $c = \sum_{t=1}^n b_t$ the total number of marks in the word.
+        </p>
+
+        <div class="idea">
+          <span class="tag-ex">Running Example</span>
+          With alphabet $A = 4$ ($\mathtt{a,b,c,d}$), horizon $n = 4$, modulus $m = 2$, start state $s_0 = 1$, query $q = \mathtt{a}$, and word $\mathtt{b\,a\,d\,a}$, the marks are $0, 1, 0, 1$, the states are $1, 0, 0, 1$, and the final answer is $s_4 = 1$.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 1.</strong> Gold trace on the running example ($s_0 = 1,\ q = \mathtt{a},\ w = \mathtt{b\,a\,d\,a},\ m = 2$).</caption>
+            <thead>
+              <tr><th>Step $t$</th><th class="num">0</th><th class="num">1</th><th class="num">2</th><th class="num">3</th><th class="num">4</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Letter $w_t$</td><td class="num">&mdash;</td><td class="num"><code>b</code></td><td class="num"><code>a</code></td><td class="num"><code>d</code></td><td class="num"><code>a</code></td></tr>
+              <tr><td>Mark $b_t = \mathbf{1}[w_t = \mathtt{a}]$</td><td class="num">&mdash;</td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td></tr>
+              <tr><td>State $s_t = (s_{t-1} + b_t) \bmod 2$</td><td class="num">1</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num win">1</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Vocabulary and Position Indexing</h3>
+        <p>
+          To represent prompts, intermediate states, and answers as a single token sequence, we use a vocabulary of $|\mathcal{V}| = A + m + 3$ distinct tokens:
+        </p>
         <ul>
-          <li data-step="5">Attention + MLP is one <b>block</b>. There are 2 blocks.</li>
-          <li data-step="5">Each block has 3 <b>heads</b>, i.e. 3 independent copy operations \(h\).</li>
-          <li data-step="5">A row may only read rows at or before it (causal mask).</li>
+          <li><strong>Letter tokens ($0, \dots, A-1$):</strong> represent the alphabet letters ($\mathtt{a, b, c, d}$).</li>
+          <li><strong>State-value tokens ($A, \dots, A + m - 1$):</strong> represent state integers $v \in \{0, \dots, m-1\}$ as separate token IDs $A + v$, so a state digit $0$ or $1$ is never confused with a letter token.</li>
+          <li><strong>Delimiters ($A+m,\ A+m+1,\ A+m+2$):</strong> $\textsc{sep}$ (end of prompt), $\mathtt{:}$ (before the final answer), and $\textsc{eos}$ (end of sequence).</li>
         </ul>
-      </div>
-      <div data-step="6">
-        <table class="slide-table compact">
-          <thead><tr><th>Matrix</th><th>Shape</th><th>Example</th></tr></thead>
-          <tbody>
-            <tr><td>\(E_{\mathrm{tok}}, R\)</td><td>\(|\mathcal V| \times W\)</td><td>9 × 33</td></tr>
-            <tr><td>\(E_{\mathrm{pos}}\)</td><td>\(P \times W\)</td><td>14 × 33</td></tr>
-            <tr><td>\(W^Q_h, W^K_h\)</td><td>\(P \times W\)</td><td>14 × 33</td></tr>
-            <tr><td>\(W^V_h\)</td><td>\(W \times W\)</td><td>33 × 33</td></tr>
-            <tr><td>\(W_{\mathrm{in}}, W_{\mathrm{out}}^{\top}\)</td><td>\(F \times W\)</td><td>30 × 33</td></tr>
-            <tr><td>Parameters</td><td></td><td>17,154</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-  <section class="slide">
-    <p class="slide-kicker">6 · Inside each row</p>
-    <h2>Each vector is split into named slots</h2>
-    <div class="idea"><span class="tag-ex">Example</span> The row for the letter <b>a</b> at position 3 starts as \(e_{\mathtt a}\) in TL and \(e_3\) in POS. Block 0 then writes \(e_{\mathtt a}\) into QRY and 1 into MATCH.</div>
-    <div class="fig" style="max-width:42rem" data-hc="slots"></div>
-    <div data-hc="slotinfo"></div>
-    <table class="slide-table compact glossary">
-      <tbody>
-        <tr><td>TL</td><td>the letter, one-hot</td><td>PREV</td><td>previous state \(s_{t-1}\)</td></tr>
-        <tr><td>TV</td><td>a state value, one-hot</td><td>MT</td><td>copy of the mark (process)</td></tr>
-        <tr><td>POS</td><td>the position, one-hot</td><td>CNT</td><td>the count \(c\) (outcome)</td></tr>
-        <tr><td>QRY</td><td>copy of the query \(q\)</td><td>S0</td><td>start state \(s_0\) (outcome)</td></tr>
-        <tr><td>MATCH</td><td>the mark \([w_t = q]\)</td><td>OUT</td><td>the value to print</td></tr>
-      </tbody>
-    </table>
-    <div class="gen" data-step="3"><span class="tag-gen">In general</span> Every slot has a single job. Attention weights are identity blocks that copy one slot into another; the MLPs hold the small AND gates.</div>
-  </section>
 
-  <section class="slide">
-    <p class="slide-kicker">7 · Who writes each slot</p>
-    <h2>Given by the tokens vs written by the network</h2>
-    <div class="hc-grid fill">
-      <div>
-        <div class="hc-controls" data-hc="fillctl"></div>
-        <div data-hc="fillfig"></div>
-      </div>
-      <div>
-        <table class="slide-table compact">
-          <thead><tr><th>Slot</th><th>Written by</th><th>Which rows</th></tr></thead>
-          <tbody>
-            <tr class="hc-given"><td>TL, TV, POS</td><td>input: \(E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}\)</td><td>TL at letters, TV at state tokens, POS everywhere</td></tr>
-            <tr><td>QRY</td><td>block 0, head 0</td><td>letters \(w_1..w_n\)</td></tr>
-            <tr><td>MATCH</td><td>block 0, MLP</td><td>letters equal to \(q\)</td></tr>
-            <tr><td>PREV, MT</td><td>process block 1, heads 0, 1</td><td>rows that predict \(s_t\)</td></tr>
-            <tr><td>CNT, S0</td><td>outcome block 1, heads 0, 1</td><td>the row that predicts \(s_n\)</td></tr>
-            <tr><td>OUT</td><td>block 1 MLP (process head 2 for the copy)</td><td>rows that predict a state</td></tr>
-          </tbody>
-        </table>
+        <p>
+          Positions are <strong>0-indexed</strong> ($0, 1, \dots, P-1$), where $P = 2n + 6$ ($P = 14$ for $n = 4$) is the length of the process sequence. Both models allocate the same position capacity $P = 2n + 6$ so that every parameter matrix has the exact same dimensions in both programs:
+        </p>
         <ul>
-          <li data-step="1"><b>TV is never computed.</b> It is part of the input: the one-hot value of a state token.</li>
-          <li data-step="1">Row 0 holds \(s_0\), from the prompt.</li>
-          <li data-step="2"><b>Process:</b> rows \(s_1..s_n\) are tokens the model printed in earlier passes, fed back. Their TV is the model's own output, not a new slot.</li>
-          <li data-step="2"><b>Outcome:</b> no such rows. TV is set only at \(s_0\) and the final answer.</li>
-          <li data-step="3">Every other slot starts at 0 and is filled by one hand-written head or MLP.</li>
-          <li data-step="3">The map is free run: row \(i\) only sees rows \(\le i\), so one pass over the generated row gives the same rows as pass-by-pass generation. EOS is greyed out because no pass computes it.</li>
+          <li><strong>Shared prompt (positions $0 \dots n+2$):</strong> $s_0$ at position $0$, query $q$ at position $1$, letters $w_1 \dots w_n$ at positions $2 \dots n+1$ (so $w_t$ sits at position $1+t$), and $\textsc{sep}$ at position $n+2$.</li>
+          <li><strong>Process continuation (positions $n+3 \dots 2n+5$):</strong> intermediate states $s_1 \dots s_n$ at positions $n+3 \dots 2n+2$, followed by $\mathtt{:}$, $s_n$, and $\textsc{eos}$ at positions $2n+3, 2n+4, 2n+5$.</li>
+          <li><strong>Outcome continuation (positions $n+3 \dots n+5$):</strong> skips the intermediate states and writes $\mathtt{:}$, $s_n$, and $\textsc{eos}$ directly at positions $n+3, n+4, n+5$.</li>
         </ul>
-      </div>
-    </div>
-  </section>
 
-  <section class="slide">
-    <p class="slide-kicker">8 · Inference</p>
-    <h2>At inference: one token at a time</h2>
-    <div class="hc-controls" data-hc="genctl"></div>
-    <div data-hc="genfig" data-gen></div>
-    <div data-hc="geninfo"></div>
-  </section>
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 1 &middot; Sequence Layout (0-indexed positions above each token)</p>
+            <div class="fig" data-hc="fig1"></div>
+          </div>
+        </div>
 
-  <section class="slide mx-slide">
-    <p class="slide-kicker">9 · Process program, every matrix</p>
-    <h2>Producing row 8: every matrix</h2>
-    <div class="hc-controls mx-ctl" data-hc="mxctlp"></div>
-    <div class="mx-grid">
-      <div data-hc="mxfigp" data-mx="process"></div>
-      <div data-hc="mxsidep"></div>
-    </div>
-  </section>
+        <p>
+          One structural consequence drives the entire construction below. In causal next-token prediction, <strong>position $i$ predicts token $i+1$</strong>. In the process row, the position that predicts $s_t$ is position $n+1+t$ (position $6$ holding $\textsc{sep}$ predicts $s_1$; position $6+t-1$ holding $s_{t-1}$ predicts $s_t$). Thus, the process model <em>always sees its previous state $s_{t-1}$ on the page</em>, whereas the outcome model never sees any intermediate state and must compute $s_n = (s_0 + \sum_{t=1}^n b_t) \bmod m$ in a single shot at the colon (position $n+3 = 7$).
+        </p>
 
-  <section class="slide mx-slide">
-    <p class="slide-kicker">10 · Outcome program, every matrix</p>
-    <h2>Producing row 8, outcome weights</h2>
-    <div class="hc-controls mx-ctl" data-hc="mxctlo"></div>
-    <div class="mx-grid">
-      <div data-hc="mxfigo" data-mx="outcome"></div>
-      <div data-hc="mxsideo"></div>
-    </div>
-  </section>
+        <h2 id="sec-toolkit">2. Three Linear-Algebra Primitives</h2>
 
-  <section class="slide">
-    <p class="slide-kicker">11 · Playground</p>
-    <h2>Run both programs</h2>
-    <p class="hc-sub">Change the query, start state or letters. Both programs should match the correct row for every input.</p>
-    <div class="hc-controls" data-hc="ctl8"></div>
-    <div class="hc-grid play">
-      <div>
-        <div class="hc-controls" data-hc="ctl8b"></div>
-        <div data-hc="fig8"></div>
-      </div>
-      <div>
-        <div data-hc="outputs"></div>
+        <p>
+          Writing Transformer weights by hand is like writing a small assembly program. Every weight matrix in both constructions is built from just three elementary facts:
+        </p>
+
+        <ol>
+          <li>
+            <strong>One-hot vectors test equality via dot products.</strong>
+            Representing item $i$ by the basis vector $e_i$ (a $1$ at coordinate $i$ and $0$ elsewhere) turns equality testing into an inner product: $e_i \cdot e_j = \mathbf{1}[i = j]$.
+          </li>
+          <li>
+            <strong>Two-input ReLU units form exact binary AND gates.</strong>
+            With $\operatorname{ReLU}(x) = \max(0, x)$, for binary inputs $x, y \in \{0, 1\}$,
+            \[
+              2\,\operatorname{ReLU}(x + y - 1.5) =
+              \begin{cases}
+                2 \cdot 0.5 = 1 & \text{if } x = 1 \text{ and } y = 1, \\
+                0 & \text{otherwise (since } x + y - 1.5 \le -0.5\text{)}.
+              \end{cases}
+            \]
+            Replacing $+y$ with $-y$ and shifting the threshold to $-0.5$ gives $2\,\operatorname{ReLU}(x - y - 0.5) = \mathbf{1}[x = 1 \wedge y = 0]$.
+          </li>
+          <li>
+            <strong>Softmax with a large routing gap $\beta_n$ acts as a pointer or uniform average.</strong>
+            With score gap $\beta_n = \max\{16,\, 3\log(8(n+3))\} = 16$, softmax concentrates almost all weight on the maximum-scoring entry, or splits it equally across tied winners:
+            \[
+              \operatorname{softmax}(16, 0, 0, 0) \approx (1 - 3\cdot 10^{-7},\ 10^{-7},\ 10^{-7},\ 10^{-7}), \qquad
+              \operatorname{softmax}(16, 16, 0, 0) \approx (\tfrac{1}{2}, \tfrac{1}{2}, 0, 0).
+            \]
+            Because softmax weights must sum to $1$, a position that has nothing to read in a given head is routed to a <strong>fallback position</strong> whose source slot is guaranteed to be zero, so copying from it adds $0$.
+          </li>
+        </ol>
+
+        <h2 id="sec-network">3. The Network Architecture &amp; Residual Slot Encoding</h2>
+
+        <p>
+          The architecture is a two-block causal Transformer ($L = 2$ blocks, $H = 3$ heads per block, head dimension $P$, ReLU MLP of width $F$, no LayerNorm). Given a sequence of $T$ token IDs, the state of the network is a $T \times W$ matrix $X$ whose $i$-th row is the residual vector of position $i$:
+        </p>
+
+        <div class="eq-block">
+          <div class="eq-row"><span>\(X = E_{\mathrm{tok}}[\mathrm{ids}] + E_{\mathrm{pos}}[0{:}T]\)</span><span class="shape">Input: token embedding + position one-hot</span></div>
+          <div class="eq-row"><span>\(S_h = \bigl(X W_h^{Q\top}\bigr)\bigl(X W_h^{K\top}\bigr)^{\!\top} / \sqrt{P}\)</span><span class="shape">Causal routing scores for head \(h \in \{0,1,2\}\)</span></div>
+          <div class="eq-row"><span>\(X \mathrel{+}= \sum_{h=0}^{2} \operatorname{softmax}(S_h)\, X W_h^{V\top}\)</span><span class="shape">Attention: load slots from earlier positions</span></div>
+          <div class="eq-row"><span>\(X \mathrel{+}= \operatorname{ReLU}\bigl(X W_{\mathrm{in}}^{\top} + b\bigr)\, W_{\mathrm{out}}^{\top}\)</span><span class="shape">MLP: compute new slots within each position</span></div>
+          <div class="eq-row"><span>\(\mathrm{logits} = X R^{\top}\)</span><span class="shape">Readout: score next token in \(\mathbb{R}^{|\mathcal{V}|}\)</span></div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 2.</strong> Architectural symbols, dimensions on the running example ($n = 4$), and default training sizes ($n = 12$).</caption>
+            <thead>
+              <tr><th>Symbol / Matrix</th><th>Meaning / Shape</th><th class="num">Example ($n=4$)</th><th class="num">Default ($n=12$)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>$A,\ n,\ m$</td><td>Alphabet size, word length, modulus</td><td class="num">4, 4, 2</td><td class="num">4, 12, 2</td></tr>
+              <tr><td>$|\mathcal{V}| = A + m + 3$</td><td>Vocabulary size (letters, states, $\textsc{sep}$, $\mathtt{:}$, $\textsc{eos}$)</td><td class="num">9</td><td class="num">9</td></tr>
+              <tr><td>$P = 2n + 6$</td><td>Maximum sequence positions &amp; head dimension</td><td class="num">14</td><td class="num">30</td></tr>
+              <tr><td>$W = 2A + 4m + P + 3$</td><td>Residual stream width ($2A + 4m + 2n + 9$)</td><td class="num">33</td><td class="num">49</td></tr>
+              <tr><td>$F = \max\{A, 3m(n{+}1), 2n{+}1\}$</td><td>Hidden ReLU units per MLP block</td><td class="num">30</td><td class="num">78</td></tr>
+              <tr><td>$E_{\mathrm{tok}}, R \in \mathbb{R}^{|\mathcal{V}| \times W}$</td><td>Token embedding and readout matrices</td><td class="num">$9 \times 33$</td><td class="num">$9 \times 49$</td></tr>
+              <tr><td>$E_{\mathrm{pos}} \in \mathbb{R}^{P \times W}$</td><td>Position embedding matrix</td><td class="num">$14 \times 33$</td><td class="num">$30 \times 49$</td></tr>
+              <tr><td>$W_h^Q, W_h^K \in \mathbb{R}^{P \times W},\ W_h^V \in \mathbb{R}^{W \times W}$</td><td>Per-head query, key, and value projections</td><td class="num">$14{\times}33,\ 33{\times}33$</td><td class="num">$30{\times}49,\ 49{\times}49$</td></tr>
+              <tr><td>$W_{\mathrm{in}}, W_{\mathrm{out}}^{\top} \in \mathbb{R}^{F \times W}$</td><td>MLP input and transposed output matrices</td><td class="num">$30 \times 33$</td><td class="num">$78 \times 49$</td></tr>
+              <tr><td>Total parameters</td><td>All tensors across 2 blocks + embeddings</td><td class="num win">17,154</td><td class="num win">45,702</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Splitting the Residual Stream into Disjoint Named Slots</h3>
+
+        <p>
+          Think of the residual vector $x_i \in \mathbb{R}^W$ at position $i$ as a collection of named registers called <strong>slots</strong>, each occupying a fixed slice of coordinates. Attention is the only mechanism that <em>loads</em> a slot from another position ($W_V$ maps a source slot to a destination slot); the MLP <em>computes</em> new slots from slots already present at the same position.
+        </p>
+
+        <p>
+          Crucially, the input embeddings populate three disjoint slots:
+        </p>
         <ul>
-          <li>The matrix \(X\): rows = tokens, columns = slots</li>
-          <li>Blue \(\gt 0\), red \(\lt 0\); hover for values</li>
+          <li>A <strong>letter token</strong> ($a < A$) writes $e_a$ into <span class="reg">TL</span> and leaves <span class="reg">TV</span> all zero.</li>
+          <li>A <strong>state-value token</strong> ($A + v$) writes $e_v$ into <span class="reg">TV</span> and leaves <span class="reg">TL</span> all zero.</li>
+          <li>The <strong>delimiter tokens</strong> ($\textsc{sep}$, $\mathtt{:}$, $\textsc{eos}$) write <strong>zeros to both</strong> <span class="reg">TL</span> and <span class="reg">TV</span>.</li>
+          <li>Every position $i \in \{0, \dots, P-1\}$ writes its one-hot index $e_i$ into <span class="reg">POS</span> via $E_{\mathrm{pos}}$.</li>
         </ul>
-      </div>
-    </div>
-  </section>
 
-  <section class="slide">
-    <p class="slide-kicker">12 · Summary</p>
-    <h2>Same answer, very different programs</h2>
-    <table class="slide-table">
-      <thead><tr><th></th><th>Process</th><th>Outcome</th></tr></thead>
-      <tbody>
-        <tr><td>Embeddings + block 0</td><td colspan="2" style="text-align:center">identical weights (0 entries differ)</td></tr>
-        <tr><td>Block 1 + readout</td><td colspan="2" style="text-align:center">different weights (readout: just 4 entries, for ':' and EOS)</td></tr>
-        <tr><td>Marks read per output</td><td>1</td><td>all \(n\)</td></tr>
-        <tr><td>Block-1 heads used</td><td>3</td><td>2</td></tr>
-        <tr><td>Block-1 ReLU units</td><td>\(2m\) (example: 4)</td><td>\(3m(n{+}1)\) (example: 30)</td></tr>
-        <tr><td>Grows with \(n\)?</td><td>no</td><td>yes</td></tr>
-        <tr><td>Supervised tokens</td><td>\(n + 3\)</td><td>3</td></tr>
-      </tbody>
-    </table>
-    <ul>
-      <li data-step="1">Both programs are exact and live in the same network.</li>
-      <li data-step="2">Process: a small rule applied \(n\) times. Outcome: one large lookup over every possible count.</li>
-      <li data-step="3">Next: train one random starting point under each loss and compare it with these two programs.</li>
-    </ul>
-  </section>
+        <p>
+          Every remaining slot starts at zero and is written by a single attention head or MLP sub-layer. Because letter tokens have zero <span class="reg">TV</span> and state tokens have zero <span class="reg">TL</span>, any head that copies <span class="reg">TL</span> can safely use position $0$ (which holds $s_0$, a state token) as its fallback, and any head that copies <span class="reg">TV</span> can safely use position $1$ (which holds $q$, a letter token) as its fallback.
+        </p>
 
-  <section class="slide slide-title">
-    <p class="slide-kicker">Appendix</p>
-    <h2>Each part as a picture</h2>
-    <p class="hc-sub">The same computations as slides 8–9, drawn as token diagrams instead of matrices.</p>
-  </section>
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 2 &middot; The 10 Disjoint Slots of a Residual Vector $x_i \in \mathbb{R}^{33}$ (Click any slot to inspect)</p>
+            <div class="fig" data-hc="slots"></div>
+            <div data-hc="slotinfo"></div>
+          </div>
+        </div>
 
-  <section class="slide">
-    <p class="slide-kicker">A1 · Attention</p>
-    <h2>Each head looks up one row</h2>
-    <div class="hc-grid heat">
-      <div>
-        <div class="hc-controls" data-hc="heads"></div>
-        <div data-hc="fig4"></div>
-      </div>
-      <div>
-        <div class="idea"><span class="tag-ex">Example</span> Head "Proc h1": row 9 (holding \(s_3 = 0\)) needs the mark of \(w_4\), stored at row 5. The heatmap shows a dark cell at (9, 5).</div>
-        <div class="eq-row" data-step="1"><span>Key of row \(j\): \(k_j = e_j\), its position one-hot</span></div>
-        <div class="eq-row" data-step="2"><span>Query of row 9: \(q_{9} \propto e_5\), the row it wants</span></div>
-        <div class="eq-row" data-step="3"><span>Score \(q_{9} \cdot k_j = 16\) if \(j = 5\), else 0</span></div>
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 3.</strong> Directory of all 10 residual stream slots, their dimensions, who writes them, and which positions use them.</caption>
+            <thead>
+              <tr><th>Slot</th><th>Coordinates ($n=4$)</th><th>Size</th><th>Written by</th><th>Active rows &amp; role</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="reg">TL</span></td><td>$0\text{--}3$</td><td>$A = 4$</td><td>$E_{\mathrm{tok}}$</td><td>Letter tokens ($q$ at row $1$, $w_1\dots w_n$ at rows $2\dots n+1$): one-hot letter $e_a$</td></tr>
+              <tr><td><span class="reg">TV</span></td><td>$4\text{--}5$</td><td>$m = 2$</td><td>$E_{\mathrm{tok}}$</td><td>State tokens ($s_0$ at row $0$, plus $s_1\dots s_n$ in process): one-hot value $e_v$</td></tr>
+              <tr><td><span class="reg">POS</span></td><td>$6\text{--}19$</td><td>$P = 14$</td><td>$E_{\mathrm{pos}} = I_P$</td><td>Every row $i$: position one-hot $e_i$ used by all $W^Q, W^K$ and delimiter readout</td></tr>
+              <tr><td><span class="reg">QRY</span></td><td>$20\text{--}23$</td><td>$A = 4$</td><td>Block 0, Head 0</td><td>Word rows $2\dots n+1$: copy of query embedding $e_q$ from row $1$</td></tr>
+              <tr><td><span class="reg">MATCH</span></td><td>$24$</td><td>$1$</td><td>Block 0, MLP</td><td>Word rows $2\dots n+1$: indicator mark $b_t = \mathbf{1}[w_t = q]$</td></tr>
+              <tr><td><span class="reg">PREV</span></td><td>$25\text{--}26$</td><td>$m = 2$</td><td>Process B1, Head 0</td><td>Process rows $n+2\dots 2n+1$ predicting $s_t$: copy of previous state $e_{s_{t-1}}$</td></tr>
+              <tr><td><span class="reg">MT</span></td><td>$27$</td><td>$1$</td><td>Process B1, Head 1</td><td>Process rows $n+2\dots 2n+1$ predicting $s_t$: copy of step $t$'s mark $b_t$</td></tr>
+              <tr><td><span class="reg">CNT</span></td><td>$28$</td><td>$1$</td><td>Outcome B1, Head 0</td><td>Outcome colon row $n+3$: total mark count $c = \sum_{t=1}^n b_t$</td></tr>
+              <tr><td><span class="reg">S0</span></td><td>$29\text{--}30$</td><td>$m = 2$</td><td>Outcome B1, Head 1</td><td>Outcome colon row $n+3$: copy of start state $e_{s_0}$ from row $0$</td></tr>
+              <tr><td><span class="reg">OUT</span></td><td>$31\text{--}32$</td><td>$m = 2$</td><td>B1 MLP &amp; Proc Head 2</td><td>Rows predicting a state value: one-hot $e_{\text{next value}}$ read by $R$</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>How the Residual Stream Fills Across Sub-Layers</h3>
+        <p>
+          Step through the five stages below (<span class="reg">Input</span> $\to$ <span class="reg">Block 0 attn</span> $\to$ <span class="reg">Block 0 MLP</span> $\to$ <span class="reg">Block 1 attn</span> $\to$ <span class="reg">Block 1 MLP</span>) and toggle between <strong>process</strong> and <strong>outcome</strong>. Cells outlined in orange are newly written by that sub-layer. Notice that <span class="reg">TV</span> is <em>never</em> written by any attention head or MLP: it comes purely from the input embedding of state tokens that were either in the prompt ($s_0$) or printed by the model in earlier passes and fed back ($s_1 \dots s_n$).
+        </p>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 3 &middot; Residual Stream $X$ After Each Sub-Layer (Orange outlines = written in current step)</p>
+            <div class="hc-controls" data-hc="fillctl"></div>
+            <div data-hc="fillfig"></div>
+          </div>
+        </div>
+
+        <h2 id="sec-block0">4. Block 0: Finding the Marks (Identical in Both Programs)</h2>
+
+        <p>
+          Before counting can begin, both programs must determine which letters $w_t$ match the query $q$. Because an MLP operates on each position independently, testing $w_t = q$ requires bringing $q$ and $w_t$ into the same residual vector. Block 0 does this in two steps, using <strong>identical weights</strong> in both the process and outcome programs:
+        </p>
+        <ol>
+          <li>
+            <strong>Block 0, Head 0 ($\text{QRY} \leftarrow \text{TL}$):</strong>
+            All heads share the identity key matrix $W^K[d, \text{POS}_d] = 1$, so the key of row $j$ is simply its position one-hot $k_j = e_j$. In Head 0, each letter position $i \in \{2, \dots, n+1\}$ sets $W^Q[1, \text{POS}_i] = C = 16\sqrt{P}$ to attend to position $1$ (which holds $q$), while every other position routes to fallback position $0$ (whose <span class="reg">TL</span> slot is zero). The value matrix sets $W^V[\text{QRY}_a, \text{TL}_a] = 1$ for $a < A$, copying $e_q$ into <span class="reg">QRY</span> at every letter position. Heads 1 and 2 of Block 0 are zero.
+          </li>
+          <li>
+            <strong>Block 0, MLP ($\text{MATCH} \leftarrow \mathbf{1}[\text{TL} = \text{QRY}]$):</strong>
+            Each letter position $1+t$ now holds $e_{w_t}$ in <span class="reg">TL</span> and $e_q$ in <span class="reg">QRY</span>. The MLP uses $A = 4$ ReLU AND-gates&mdash;one per letter $a \in \{\mathtt{a,b,c,d}\}$:
+            \[
+              \text{MATCH} \mathrel{+}= \sum_{a=0}^{A-1} 2\,\operatorname{ReLU}\bigl(\text{TL}_a + \text{QRY}_a - 1.5\bigr) = \mathbf{1}[w_t = q] = b_t.
+            \]
+            Gate $a$ reaches pre-activation $+0.5$ (and output $2 \times 0.5 = 1$) if and only if both $\text{TL}_a = 1$ and $\text{QRY}_a = 1$. Every other gate has pre-activation $-0.5$ or $-1.5$ and stays off.
+          </li>
+        </ol>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 4 &middot; Block 0 on the Running Example: Query Lookup and AND-Gate Marks</p>
+            <div class="fig" data-hc="fig5"></div>
+          </div>
+        </div>
+
+        <h2 id="sec-process">5. Block 1, Process Program: One Step at a Time</h2>
+
+        <p>
+          Counting is a loop: <code>s = (s + mark) mod m</code>. In the process format, the model's earlier outputs $s_1, \dots, s_{t-1}$ are already on the page, so Block 1 only needs to implement the <strong>loop body</strong> at each position $r = n + 1 + t$ (positions $6, 7, 8, 9$ for $t = 1, 2, 3, 4$):
+        </p>
+
         <ul>
-          <li data-step="4">By fact 3, softmax puts weight \(\gt 0.99999\) on row 5</li>
-          <li data-step="5">The value matrix copies one slot, e.g. MATCH of row 5 into MT of row 9</li>
-          <li data-step="5">Click the buttons to see the other heads</li>
+          <li>
+            <strong>Head 0 ($\text{PREV} \leftarrow s_{t-1}$):</strong>
+            For $t = 1$, predicting position $n+2 = 6$ holds $\textsc{sep}$, so it attends to position $0$ to fetch $s_0$. For $t \ge 2$, predicting position $n+1+t$ already holds token $s_{t-1}$ in its own <span class="reg">TV</span> slot, so it attends to itself ($r \to r$). All other positions fall back to position $1$ ($q$, whose <span class="reg">TV</span> is zero). $W^V$ copies $\text{TV} \to \text{PREV}$.
+          </li>
+          <li>
+            <strong>Head 1 ($\text{MT} \leftarrow b_t$):</strong>
+            Predicting position $n+1+t$ looks $n$ positions back to letter position $1+t$ (which holds $w_t$ and its mark in <span class="reg">MATCH</span>). Fallback is position $0$ (no mark). $W^V$ copies $\text{MATCH} \to \text{MT}$.
+          </li>
+          <li>
+            <strong>Head 2 ($\text{OUT} \leftarrow s_n$ at the colon):</strong>
+            At the colon (position $2n+3 = 11$), the final state $s_n$ has already been written at position $2n+2 = 10$. Head 2 routes $2n+3 \to 2n+2$ and copies $\text{TV} \to \text{OUT}$ directly so the answer is repeated after the colon without further arithmetic.
+          </li>
+          <li>
+            <strong>Block 1 MLP ($2m$ transition gates):</strong>
+            At each predicting position $n+1+t$, <span class="reg">PREV</span> holds $e_{s_{t-1}}$ and <span class="reg">MT</span> holds $b_t \in \{0, 1\}$. Two ReLU gates per state $j \in \{0, \dots, m-1\}$ encode the full transition table:
+            \[
+              \underbrace{2\,\operatorname{ReLU}(\text{PREV}_j - \text{MT} - 0.5)}_{\text{was } j,\ \text{no mark } (b_t = 0)} \to \text{OUT}_j,
+              \qquad
+              \underbrace{2\,\operatorname{ReLU}(\text{PREV}_j + \text{MT} - 1.5)}_{\text{was } j,\ \text{mark } (b_t = 1)} \to \text{OUT}_{(j+1)\bmod m}.
+            \]
+            Because the same $2m$ units run at every step $t$, <strong>the process MLP size does not depend on the word length $n$</strong>.
+          </li>
         </ul>
-      </div>
-    </div>
-  </section>
 
-  <section class="slide">
-    <p class="slide-kicker">A2 · Block 0 (same for both)</p>
-    <h2>Mark each letter: is it \(q\)?</h2>
-    <div class="idea"><span class="tag-ex">Example</span> Every letter copies the query <b>a</b> from row 1, then compares: b a d a \(\to\) marks 0 1 0 1.</div>
-    <div class="fig" style="max-width:46rem" data-hc="fig5"></div>
-    <div class="gen" data-step="3"><span class="tag-gen">In general</span> Attention copies \(e_q\) into QRY; the MLP computes \(\mathrm{MATCH} = e_{w_t} \cdot e_q = [w_t = q]\) using AND gates (fact 2).</div>
-  </section>
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 5 &middot; Process Block 1 Step-by-Step Explorer (Use buttons to step $t = 1 \dots 4$ or generate a new word)</p>
+            <div class="hc-controls" data-hc="ctl6"></div>
+            <div class="fig" data-hc="fig6"></div>
+          </div>
+        </div>
 
-  <section class="slide">
-    <p class="slide-kicker">A3 · Block 0 · inside the MLP</p>
-    <h2>One AND gate per letter</h2>
-    <div class="idea"><span class="tag-ex">Example</span> At \(w_2 = \mathtt a\): gate a sees TL\(_{\mathtt a} = 1\), QRY\(_{\mathtt a} = 1\), so \(2\,\mathrm{ReLU}(1 + 1 - 1.5) = 1\). At \(w_1 = \mathtt b\): gate b sees \(1 + 0\), so 0.</div>
-    <div class="math sm" data-step="1">\[
-      \mathrm{MATCH} \mathrel{+}= \sum_{a \in \{\mathtt{a,b,c,d}\}} 2\,\mathrm{ReLU}\big(\mathrm{TL}_a + \mathrm{QRY}_a - 1.5\big)
-    \]</div>
-    <div class="hc-grid" data-step="2">
-      <table class="slide-table compact">
-        <thead><tr><th>\(\mathrm{TL}_a\)</th><th>\(\mathrm{QRY}_a\)</th><th>inside ReLU</th><th>output</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>1</td><td>\(+0.5\)</td><td>1</td></tr>
-          <tr><td>1</td><td>0</td><td>\(-0.5\)</td><td>0</td></tr>
-          <tr><td>0</td><td>1</td><td>\(-0.5\)</td><td>0</td></tr>
-          <tr><td>0</td><td>0</td><td>\(-1.5\)</td><td>0</td></tr>
-        </tbody>
-      </table>
-      <ul>
-        <li><span class="tag-gen">In general</span> only gate \(a = w_t = q\) can fire</li>
-        <li>Weights: \(W_{\mathrm{in}}\) has 1 on TL\(_a\) and QRY\(_a\), bias \(-1.5\), \(W_{\mathrm{out}} = 2\)</li>
-      </ul>
-    </div>
-  </section>
+        <h2 id="sec-outcome">6. Block 1, Outcome Program: Everything at Once</h2>
 
-  <section class="slide">
-    <p class="slide-kicker">A4 · Process · block 1</p>
-    <h2>Each step: last state + one mark</h2>
-    <div class="idea"><span class="tag-ex">Example</span> \(t = 4\): head 0 fetches \(s_3 = 0\), head 1 fetches the mark of \(w_4 = \mathtt a\) (= 1). The MLP outputs \(s_4 = (0 + 1) \bmod 2 = 1\). Step through \(t\) below.</div>
-    <div class="hc-controls" data-hc="ctl6"></div>
-    <div class="fig" style="max-width:48rem" data-hc="fig6"></div>
-    <div class="gen" data-step="4"><span class="tag-gen">In general</span> Two lookups (\(s_{t-1}\) and one mark), then \(2m\) ReLU units compute \(s_t\). The work per step is the same for any word length \(n\).</div>
-  </section>
+        <p>
+          Without intermediate states on the page, the outcome program must aggregate all $n$ marks and compute $(s_0 + c) \bmod m$ in a single forward pass at the colon (position $n+3 = 7$):
+        </p>
 
-  <section class="slide">
-    <p class="slide-kicker">A5 · Process · inside the MLP</p>
-    <h2>Two AND gates per state value</h2>
-    <div class="idea"><span class="tag-ex">Example</span> PREV \(= e_0\), MT \(= 1\). The gate "was 0 <i>and</i> match" gives \(\mathrm{ReLU}(1 + 1 - 1.5) = 0.5\) and writes to OUT\(_1\). Every other gate is 0.</div>
-    <div class="math sm" data-step="1">\[
-      \underbrace{\mathrm{ReLU}(\mathrm{PREV}_j - \mathrm{MT} - 0.5)}_{\text{was } j \text{ and no match}} \to \mathrm{OUT}_j,
-      \qquad
-      \underbrace{\mathrm{ReLU}(\mathrm{PREV}_j + \mathrm{MT} - 1.5)}_{\text{was } j \text{ and match}} \to \mathrm{OUT}_{(j+1) \bmod m}
-    \]</div>
-    <div class="hc-grid" data-step="2">
-      <table class="slide-table compact">
-        <thead><tr><th>\(\mathrm{PREV}_j\)</th><th>MT</th><th>no-match gate</th><th>match gate</th><th>writes</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>0</td><td>0.5</td><td>0</td><td>\(\mathrm{OUT}_j\)</td></tr>
-          <tr><td>1</td><td>1</td><td>0</td><td>0.5</td><td>\(\mathrm{OUT}_{j+1}\)</td></tr>
-          <tr><td>0</td><td>0 or 1</td><td>0</td><td>0</td><td>nothing</td></tr>
-        </tbody>
-      </table>
-      <ul>
-        <li><span class="tag-gen">In general</span> exactly one gate fires; \(W_{\mathrm{out}} = 2\) turns 0.5 into 1</li>
-        <li>\(\Rightarrow \mathrm{OUT} = e_{s_t}\), and the readout prints \(s_t\)</li>
-      </ul>
-    </div>
-  </section>
+        <ul>
+          <li>
+            <strong>Head 0 ($\text{CNT} \leftarrow c = \sum_{t=1}^n b_t$):</strong>
+            Addition is commutative, so attention can count by averaging. At the colon (position $n+3$), $W^Q$ assigns the same score $C$ to all $n$ letter positions $\{2, \dots, n+1\}$. Softmax gives each letter weight $1/n$, computing the average mark $\frac{1}{n}\sum_{t=1}^n b_t$. Setting $W^V[\text{CNT}, \text{MATCH}] = n$ rescales that average back into the exact integer count $c = n \cdot \frac{1}{n}\sum_{t=1}^n b_t$.
+          </li>
+          <li>
+            <strong>Head 1 ($\text{S0} \leftarrow s_0$):</strong>
+            The colon attends to position $0$ and copies $\text{TV} \to \text{S0}$, loading $e_{s_0}$. Head 2 is all zero.
+          </li>
+          <li>
+            <strong>Block 1 MLP ($3m(n+1)$ units: one triangle bump per $(s_0, c')$):</strong>
+            A piecewise-linear ReLU network cannot compute the sawtooth function $(s_0 + c) \bmod m$ with a constant-size formula because the output wraps around every $m$ steps. Instead, for each start state $j \in \{0, \dots, m-1\}$ and each candidate count $c' \in \{0, \dots, n\}$, three ReLU units with thresholds at $c'-1,\, c',\, c'+1$ and output weights $(+1, -2, +1)$ form a <strong>triangle bump</strong> (hat function) centered at $c'$:
+            \[
+              \beta_{c'}(c) = \operatorname{ReLU}(c - c' + 1) - 2\,\operatorname{ReLU}(c - c') + \operatorname{ReLU}(c - c' - 1) = \mathbf{1}[c = c'] \quad \text{for all } c \in \mathbb{Z}.
+            \]
+            To select the active start state $s_0 = j$, each unit also reads $\text{S0}_j$ with weight $n+2$ and subtracts $n+2$ in its bias:
+            \[
+              z_{j, c', \chi} = \text{CNT} - c' + \chi + (n+2)(\text{S0}_j - 1), \qquad \chi \in \{+1, 0, -1\}.
+            \]
+            When $\text{S0}_j = 1$, the gate term cancels; when $\text{S0}_j = 0$, the pre-activation is shifted down by $n+2 \ge c + 2$, keeping all three ReLUs strictly negative. Bump $(j, c')$ writes to $\text{OUT}_{(j+c') \bmod m}$, requiring $3m(n+1)$ units ($30$ units for $n=4, m=2$), which <strong>grows linearly with $n$</strong>.
+          </li>
+        </ul>
 
-  <section class="slide">
-    <p class="slide-kicker">A6 · Outcome · block 1</p>
-    <h2>One row reads all \(n\) marks at once</h2>
-    <div class="idea"><span class="tag-ex">Example</span> At ':', head 0 gives all four letters equal weight \(\tfrac14\) (fact 3, tied scores). The average mark is \(\tfrac24\); times 4 gives \(c = 2\). Head 1 fetches \(s_0 = 1\).</div>
-    <div class="hc-controls" data-hc="ctl7"></div>
-    <div class="fig" style="max-width:45rem" data-hc="fig7"></div>
-    <div class="gen" data-step="4"><span class="tag-gen">In general</span> The MLP must turn \((s_0, c)\) into \((s_0 + c) \bmod m\). It keeps one detector for every pair, \(c = 0, \dots, n\): \(3m(n{+}1)\) units, growing with \(n\).</div>
-  </section>
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 6 &middot; Outcome Block 1 Explorer (Toggle $s_0$, query $q$, or random words)</p>
+            <div class="hc-controls" data-hc="ctl7"></div>
+            <div class="fig" data-hc="fig7"></div>
+          </div>
+        </div>
 
-  <section class="slide">
-    <p class="slide-kicker">A7 · Outcome · inside the MLP</p>
-    <h2>A spike detector for each count</h2>
-    <div class="idea"><span class="tag-ex">Example</span> \(c = 2\). Detector \(c' = 2\): \(r(1) - 2r(0) + r(-1) = 1\). Detector \(c' = 1\): \(r(2) - 2r(1) + r(0) = 2 - 2 + 0 = 0\). Here \(r = \mathrm{ReLU}\).</div>
-    <div class="math sm" data-step="1">\[
-      \beta_{c'}(x) = r(x{-}c'{+}1) - 2\,r(x{-}c') + r(x{-}c'{-}1) = \begin{cases} 1 & x = c' \\ 0 & \text{any other whole number } x \end{cases}
-    \]</div>
-    <div class="hc-grid" data-step="2">
-      <table class="slide-table compact">
-        <thead><tr><th>count \(x\)</th><th>\(r(x{-}c'{+}1)\)</th><th>\(r(x{-}c')\)</th><th>\(r(x{-}c'{-}1)\)</th><th>\(\beta_{c'}\)</th></tr></thead>
-        <tbody>
-          <tr><td>below \(c'\)</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
-          <tr><td>\(c'\)</td><td>1</td><td>0</td><td>0</td><td>1</td></tr>
-          <tr><td>\(c'{+}d\), \(d \ge 1\)</td><td>\(d{+}1\)</td><td>\(d\)</td><td>\(d{-}1\)</td><td>0</td></tr>
-        </tbody>
-      </table>
-      <ul>
-        <li><span class="tag-gen">In general</span> 3 ReLUs make one spike, one spike per \((s_0, c')\)</li>
-        <li>A large negative bias switches off every \(s_0\) group but the true one</li>
-        <li>Spike \((s_0, c)\) writes OUT\(_{(s_0 + c) \bmod m} \Rightarrow\) prints \(s_n\)</li>
-      </ul>
-    </div>
-  </section>
-</div>
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 4.</strong> Why three ReLUs with weights $(+1, -2, +1)$ isolate a single integer count $x = c'$.</caption>
+            <thead>
+              <tr><th>Actual count $x$</th><th class="num">$\operatorname{ReLU}(x - c' + 1)$</th><th class="num">$\operatorname{ReLU}(x - c')$</th><th class="num">$\operatorname{ReLU}(x - c' - 1)$</th><th class="num">$\beta_{c'}(x) = r_+ - 2r_0 + r_-$</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>$x \le c' - 1$ (below $c'$)</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num">$0$</td></tr>
+              <tr><td>$x = c'$ (exact match)</td><td class="num">$1$</td><td class="num">$0$</td><td class="num">$0$</td><td class="num win">$1$</td></tr>
+              <tr><td>$x = c' + d$ ($d \ge 1$)</td><td class="num">$d + 1$</td><td class="num">$d$</td><td class="num">$d - 1$</td><td class="num">$(d+1) - 2d + (d-1) = 0$</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="sec-inference">7. Readout, Free-Running Inference &amp; Attention Maps</h2>
+
+        <p>
+          The readout matrix $R \in \mathbb{R}^{|\mathcal{V}| \times W}$ converts the final residual stream into token logits $z = X R^{\top}$:
+        </p>
+        <ul>
+          <li><strong>State-value tokens ($A + v$):</strong> read $\text{OUT}_v$ with weight $20$, so $\text{OUT} = e_v$ produces logit $20$ on token $A+v$ and $0$ on all other state values.</li>
+          <li><strong>Colon ($\mathtt{:}$) and $\textsc{eos}$:</strong> are emitted by position clock rather than state computation&mdash;$R[\mathtt{:}, \text{POS}_{\text{colon\_at}}] = 20$ and $R[\textsc{eos}, \text{POS}_{\text{eos\_at}}] = 20$, where $(\text{colon\_at}, \text{eos\_at}) = (2n+2, 2n+4)$ for process and $(n+2, n+4)$ for outcome.</li>
+        </ul>
+
+        <h3>Pass-by-Pass Autoregressive Generation</h3>
+        <p>
+          At test time, the model is given only the prompt (rows $0 \dots n+2$) and generates one token per forward pass by greedy argmax on the last row's logits, appending each predicted token to the input of the next pass. Because the causal mask prevents any row $i$ from reading rows $j > i$, running a single forward pass on the completed sequence produces the <em>exact same</em> activations and logits at every row as pass-by-pass autoregressive decoding. Use the controls below to step through each pass of inference:
+        </p>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 7 &middot; Autoregressive Free-Running Inference (One Forward Pass per Generated Token)</p>
+            <div class="hc-controls" data-hc="genctl"></div>
+            <div data-hc="genfig" data-gen></div>
+            <div data-hc="geninfo"></div>
+          </div>
+        </div>
+
+        <h3>Inspecting All Six Active Attention Heads</h3>
+        <p>
+          Click through the six active heads below to compare their $T \times T$ causal attention matrices on the running example. Every head is either a sharp single-row lookup (weight $\approx 1$ on one target position) or, in Outcome Head 0, a uniform average of weight $1/n = 0.25$ across the $n = 4$ word positions:
+        </p>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 8 &middot; Attention Heatmaps Across All Active Heads</p>
+            <div class="hc-grid heat">
+              <div>
+                <div class="hc-controls" data-hc="heads"></div>
+                <div data-hc="fig4"></div>
+              </div>
+              <div>
+                <div class="idea">
+                  <span class="tag-ex">How to read the grid</span>
+                  Row $i$ is the querying position and column $j \le i$ is the key position being read. Grey cells ($j > i$) are hidden by the causal mask. Hover over any cell for its exact attention weight.
+                </div>
+                <ul>
+                  <li><strong>Block 0, Head 0:</strong> Letter rows $2\text{--}5$ attend to row $1$ ($q$); all other rows attend to fallback row $0$.</li>
+                  <li><strong>Proc h0:</strong> Row $6$ ($\textsc{sep}$) attends to row $0$ ($s_0$); rows $7\text{--}9$ attend to themselves ($s_{t-1}$).</li>
+                  <li><strong>Proc h1:</strong> Rows $6\text{--}9$ attend $n=4$ steps back to rows $2\text{--}5$ (the diagonal of marks $b_t$).</li>
+                  <li><strong>Proc h2:</strong> Row $11$ ($\mathtt{:}$) attends to row $10$ ($s_4$) to copy the final answer.</li>
+                  <li><strong>Out h0 &amp; h1:</strong> Row $7$ ($\mathtt{:}$) averages rows $2\text{--}5$ in Head 0 and fetches $s_0$ from row $0$ in Head 1.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="sec-matrices">8. Matrix-by-Matrix Walkthroughs</h2>
+
+        <p>
+          Every head and MLP sub-layer in both programs is an explicit matrix operation on the residual stream $X$. In the two interactive explorers below, each matrix multiplication $C = A \cdot B$ is drawn in a <strong>Falk scheme</strong>: $A$ sits on the bottom-left, $B$ sits on the top-right, and their product $C$ sits at their intersection so that row $i$ of $A$ and column $j$ of $B$ meet at entry $C[i, j]$.
+        </p>
+        <p>
+          Both walkthroughs trace the pass that produces <strong>row 8</strong> (the second state $s_2$ in the process program, and the final answer $s_4$ in the outcome program). Click any stage button (<span class="reg">Part</span> / <span class="reg">Step</span>) or click any cell inside the result matrix to inspect the exact non-zero terms of its dot product.
+        </p>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 9 &middot; Process Program: Complete Matrix-by-Matrix Walkthrough (Producing Row 8)</p>
+            <div class="hc-controls mx-ctl" data-hc="mxctlp"></div>
+            <div class="mx-grid">
+              <div data-hc="mxfigp" data-mx="process"></div>
+              <div data-hc="mxsidep"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 10 &middot; Outcome Program: Complete Matrix-by-Matrix Walkthrough (Producing Row 8)</p>
+            <div class="hc-controls mx-ctl" data-hc="mxctlo"></div>
+            <div class="mx-grid">
+              <div data-hc="mxfigo" data-mx="outcome"></div>
+              <div data-hc="mxsideo"></div>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="sec-playground">9. Interactive Playground &amp; Summary</h2>
+
+        <p>
+          Test both hand-coded executors on any input: change the query letter $q$, toggle the start state $s_0$, click individual letters of the word to cycle them, or draw a random word. Every figure on the page updates live, and you can inspect the full $P \times W$ residual stream after the embedding layer, Block 0, or Block 1 for either program.
+        </p>
+
+        <div class="hc-wide">
+          <div class="hc-card">
+            <p class="hc-card-label">Figure 11 &middot; Live Playground: Modify the Prompt and Inspect the Residual Stream</p>
+            <div class="hc-controls" data-hc="ctl8"></div>
+            <div class="hc-grid play">
+              <div>
+                <div class="hc-controls" data-hc="ctl8b"></div>
+                <div data-hc="fig8"></div>
+              </div>
+              <div>
+                <div data-hc="outputs"></div>
+                <p class="hc-info">
+                  <strong>Reading the residual matrix $X$:</strong> rows are token positions $0 \dots T-1$ and columns are the $W = 33$ coordinates partitioned into the 10 named slots. Blue entries are positive, red entries are negative; hover over any cell to see its exact coordinate and numerical value.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Side-by-Side Comparison of the Two Programs</h3>
+
+        <div class="table-wrap">
+          <table>
+            <caption><strong>Table 5.</strong> Exact comparison between the hand-coded Process and Outcome programs inside the shared two-block Transformer.</caption>
+            <thead>
+              <tr><th>Property</th><th>Process Program</th><th>Outcome Program</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Embeddings ($E_{\mathrm{tok}}, E_{\mathrm{pos}}$) &amp; Block 0</td><td colspan="2">Identical weights (0 parameter entries differ; both compute $\text{MATCH}_t = \mathbf{1}[w_t = q]$)</td></tr>
+              <tr><td>Where weights differ</td><td colspan="2">Block 1 ($W^Q, W^K, W^V, W_{\mathrm{in}}, b, W_{\mathrm{out}}$) and 4 entries of $R$ (positions of $\mathtt{:}$ and $\textsc{eos}$)</td></tr>
+              <tr><td>Computation strategy</td><td>Iterative loop body: $s_t = (s_{t-1} + b_t) \bmod m$</td><td>Single-shot aggregation: $(s_0 + \sum_{t=1}^n b_t) \bmod m$</td></tr>
+              <tr><td>Marks read per output token</td><td>$1$ (looks $n$ steps back to $w_t$)</td><td>All $n$ at once (uniform attention of weight $1/n$)</td></tr>
+              <tr><td>Block 1 heads used</td><td>3 ($\text{PREV} \leftarrow s_{t-1}$, $\text{MT} \leftarrow b_t$, copy $s_n$ at $\mathtt{:}$)</td><td>2 ($\text{CNT} \leftarrow n \cdot \text{mean}(b)$, $\text{S0} \leftarrow s_0$)</td></tr>
+              <tr><td>Block 1 active ReLU units</td><td>$2m$ ($4$ units for $m = 2$)</td><td>$3m(n+1)$ ($30$ units for $n = 4, m = 2$)</td></tr>
+              <tr><td>Circuit size grows with $n$?</td><td class="win">No (constant $2m$ units)</td><td>Yes (linear in horizon $n$)</td></tr>
+              <tr><td>Supervised target tokens per row</td><td>$n + 3$ ($s_1 \dots s_n, \mathtt{:}, s_n, \textsc{eos}$)</td><td>$3$ ($\mathtt{:}, s_n, \textsc{eos}$)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Because both programs live inside the exact same parameter space and achieve $100\%$ accuracy on every input, the failure of standard outcome training is not a failure of capacity. Rather, outcome supervision asks gradient descent to discover a global count-and-wrap circuit from a single end-of-sequence bit whose correlation with any individual letter mark vanishes as $n$ grows, whereas process supervision supplies a local, constant-size transition target at every step.
+        </p>
+
+        <hr>
+
+        <div class="share-row">
+          <span class="share-label">Share</span>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on X" title="Share on X" href="https://twitter.com/intent/tweet?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html&amp;text=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Bluesky" title="Share on Bluesky" href="https://bsky.app/intent/compose?text=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer%20-%20https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8c-1.5-3-5-5.5-7-4.5-1 3 .5 7 3 8.5-2.5 0-5 1-5 3s2.5 3.5 5 2.5c1-1 2.5-3 4-6 1.5 3 3 5 4 6 2.5 1 5-.5 5-2.5s-2.5-3-5-3c2.5-1.5 4-5.5 3-8.5-2-1-5.5 1.5-7 4.5Z"/></svg>
+          </a>
+          <a class="share-btn" target="_blank" rel="noopener" aria-label="Share on Reddit" title="Share on Reddit" href="https://www.reddit.com/submit?url=https%3A%2F%2Faayushmanda.github.io%2Fresearch_blog%2Fhandcoded-programs-slides.html&amp;title=Hand-Coded%20Process%20and%20Outcome%20Programs%20in%20One%20Transformer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
       </article>
     </main>
-    <script src="/assets/handcoded-slides.js?v=15" defer></script>
-    <script src="/assets/slides.js?v=8" defer></script>
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        if (window.initSlides) window.initSlides(document.querySelector(".content"));
-        var script = document.querySelector('script[src*="mathjax"]');
-        function go() {
-          var mj = window.MathJax;
-          var ready = mj && mj.startup && mj.startup.promise ? mj.startup.promise : Promise.resolve();
-          ready.then(function () { if (window.typesetCurrentSlide) window.typesetCurrentSlide(); });
-        }
-        if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) go();
-        else if (script) script.addEventListener("load", go, { once: true });
-      });
-    </script>
+    <script src="/assets/handcoded-slides.js?v=16" defer></script>
     <script src="/assets/theme-toggle.js?v=9" defer></script>
+    <script src="/assets/back-to-top.js?v=9" defer></script>
   </body>
 </html>

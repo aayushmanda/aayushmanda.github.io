@@ -1,0 +1,7 @@
+{
+  "lean.projectPath": "lean",
+  "lean.toolchain": "leanprover/lean4:v4.35.0",
+  "lean.mathlibRev": "v4.35.0",
+  "lean.arlibUrl": "https://github.com/meelgroup/arlib.git",
+  "lean.arlibRev": "8d08f89a6d05c5e8368e91659bd6e117fbb74c4e"
+}

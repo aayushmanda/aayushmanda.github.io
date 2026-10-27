@@ -175,7 +175,7 @@
 
   // ------------------------------------------------------------------ state
   const DEFAULT = { s0: 1, q: 0, word: [1, 0, 3, 0] };
-  const state = { s0: 1, q: 0, word: DEFAULT.word.slice(), t: 4, head: "p1h1", slot: null,
+  const state = { s0: 1, q: 0, word: DEFAULT.word.slice(), t: 4, head: "p1h1", slot: "MATCH",
                   prog: "process", layer: 2 };
   let run = null;
 
@@ -498,7 +498,8 @@
     else {
       timer = setInterval(() => {
         const host = document.querySelector('[data-hc="fig6"]');
-        if (!host || !host.closest(".slide.is-on")) { stopPlay(); refresh(["ctl6"]); return; }
+        const slide = host && host.closest(".slide");
+        if (!host || (slide && !slide.classList.contains("is-on"))) { stopPlay(); refresh(["ctl6"]); return; }
         state.t = (state.t % N) + 1;
         refresh(["ctl6", "fig6"]);
       }, 1400);
@@ -1214,7 +1215,7 @@
       case "relu": return "Negative entries become 0. In each row only the units whose condition holds stay positive.";
       case "out": return `Each surviving unit writes into its output slot. Slots written: ${slotsTouched(d.C.M)}.`;
       case "res": return `The MLP output is added to X. ${st.b === 0 ? "MATCH now holds the marks." : "OUT now holds the value each row prints."}`;
-      case "blk0": return "Embeddings and block 0 are identical in both programs (0 weights differ): they write QRY and MATCH, as stepped through on the previous slide. Only block 1 and 4 readout entries differ. This is the X that enters block 1.";
+      case "blk0": return "Embeddings and block 0 are identical in both programs (0 weights differ): they write QRY and MATCH, as stepped through in the Process matrix walkthrough above. Only block 1 and 4 readout entries differ. This is the X that enters block 1.";
       case "feed": return d.T + 1 > d.full.length
         ? "Last pass: EOS was printed, so generation stops."
         : `Row ${d.T - 1}'s block 1 wrote OUT, the readout printed “${tok(d.full[d.T])}”, and that token becomes row ${d.T} of the next pass, with its value in TV (bold green arrow). Pale arrows: tokens printed in earlier passes. These are the model's own prints, not gold answers. Next pass ▶ adds that row.`;
@@ -1336,7 +1337,8 @@
     if (GEN.k >= genLen()) GEN.k = 0;
     genTimer = setInterval(() => {
       const host = document.querySelector('[data-hc="genfig"]');
-      if (!host || !host.closest(".slide.is-on") || !genGo(GEN.k + 1) || GEN.k >= genLen()) genStop();
+      const slide = host && host.closest(".slide");
+      if (!host || (slide && !slide.classList.contains("is-on")) || !genGo(GEN.k + 1) || GEN.k >= genLen()) genStop();
       refresh(["genctl"]);
     }, 1300);
     refresh(GEN_NAMES);
@@ -1423,13 +1425,13 @@
     const g = genPass(), wrap = el("div", "gen-info"), np = run.prompt.length;
     const p = (html) => { const e = el("p"); e.innerHTML = html; wrap.append(e); };
     if (g.done) {
-      p(`<b>${g.full.length - np} forward passes</b>, each on the tokens written so far, produced this row. The next two slides take it apart matrix by matrix: `
+      p(`<b>${g.full.length - np} forward passes</b>, each on the tokens written so far, produced this row. The matrix walkthroughs below take it apart matrix by matrix: `
         + g.full.slice(np).map((id) => `<span class="hc-chip${isValue(id) ? " val" : ""}">${tok(id)}</span>`).join(" "));
       p("They draw the finished row in one picture. That is fair because no row ever reads a later row, so every number is the same as in these passes.");
       return wrap;
     }
     p(`<b>Pass ${GEN.k + 1}.</b> Input: rows 0–${g.L - 1}. Row ${g.L - 1} predicts “${tok(g.pred)}” (logit ${fmtV(g.logits[g.pred])}, next best ${fmtV(g.runner)}), which is appended as row ${g.L}. ▶ runs the next pass with it.`);
-    p(`Same logits as row ${g.L - 1} when the finished row is computed in one go (next slides): largest difference <b>${fmtV(g.diffMax)}</b>.`);
+    p(`Same logits as row ${g.L - 1} when the finished row is computed in one go (sections below): largest difference <b>${fmtV(g.diffMax)}</b>.`);
     return wrap;
   }
 
@@ -1480,7 +1482,9 @@
       if (s && s.step(dir)) { e.preventDefault(); e.stopPropagation(); }
     }, true);
     document.querySelectorAll("[data-mx], [data-gen]").forEach((host) => {
-      const slide = host.closest(".slide"), s = stepperOf(host);
+      const slide = host.closest(".slide");
+      if (!slide) return;
+      const s = stepperOf(host);
       let was = slide.classList.contains("is-on");
       new MutationObserver(() => {
         const on = slide.classList.contains("is-on");
